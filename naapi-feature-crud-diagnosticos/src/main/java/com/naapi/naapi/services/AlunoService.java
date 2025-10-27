@@ -11,10 +11,13 @@ import com.naapi.naapi.repositories.CursoRepository;
 import com.naapi.naapi.repositories.DiagnosticoRepository;
 import com.naapi.naapi.repositories.TurmaRepository;
 import com.naapi.naapi.services.exceptions.BusinessException;
+import com.naapi.naapi.services.specifications.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,8 +33,27 @@ public class AlunoService {
     private final DiagnosticoRepository diagnosticoRepository;
 
     @Transactional(readOnly = true)
-    public List<AlunoDTO> findAll() {
-        List<Aluno> list = repository.findAll();
+    public List<AlunoDTO> findAll(String nome, String matricula, Long cursoId, Long turmaId, Long diagnosticoId) {
+        
+        Specification<Aluno> spec = Specification.where(null);
+
+        if (nome != null && !nome.isBlank()) {
+            spec = spec.and(AlunoSpecifications.hasNome(nome));
+        }
+        if (matricula != null && !matricula.isBlank()) {
+            spec = spec.and(AlunoSpecifications.hasMatricula(matricula));
+        }
+        if (cursoId != null) {
+            spec = spec.and(AlunoSpecifications.hasCursoId(cursoId));
+        }
+        if (turmaId != null) {
+            spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId));
+        }
+        if (diagnosticoId != null) {
+            spec = spec.and(AlunoSpecifications.hasDiagnosticoId(diagnosticoId));
+        }
+
+        List<Aluno> list = repository.findAll(spec);
         return list.stream().map(AlunoDTO::new).collect(Collectors.toList());
     }
 
@@ -50,6 +72,7 @@ public class AlunoService {
         
         Aluno entity = new Aluno();
         copyDtoToEntity(dto, entity);
+        entity.setAtivo(true);
         entity = repository.save(entity);
         return new AlunoDTO(entity);
     }
@@ -70,14 +93,14 @@ public class AlunoService {
 
     @Transactional
     public void delete(Long id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Aluno não encontrado com ID: " + id);
-        }
-        repository.deleteById(id);
+        Aluno entity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado com ID: " + id));
+        
+        entity.setAtivo(false);
+        repository.save(entity);
     }
 
     private void copyDtoToEntity(AlunoInsertDTO dto, Aluno entity) {
-        // Copia os dados simples
         entity.setNome(dto.getNome());
         entity.setNomeSocial(dto.getNomeSocial());
         entity.setMatricula(dto.getMatricula());
@@ -85,18 +108,18 @@ public class AlunoService {
         entity.setPrioridadeAtendimento(dto.getPrioridadeAtendimento());
 
         Curso curso = cursoRepository.findById(dto.getCursoId())
-                .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: " + dto.getCursoId()));
+                .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: ".concat(dto.getCursoId().toString())));
         entity.setCurso(curso);
 
         Turma turma = turmaRepository.findById(dto.getTurmaId())
-                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada com ID: " + dto.getTurmaId()));
+                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada com ID: ".concat(dto.getTurmaId().toString())));
         entity.setTurma(turma);
 
         entity.getDiagnosticos().clear();
         if (dto.getDiagnosticosId() != null) {
             for (Long diagId : dto.getDiagnosticosId()) {
                 Diagnostico diag = diagnosticoRepository.findById(diagId)
-                        .orElseThrow(() -> new EntityNotFoundException("Diagnóstico não encontrado com ID: " + diagId));
+                        .orElseThrow(() -> new EntityNotFoundException("Diagnóstico não encontrado com ID: ".concat(diagId.toString())));
                 entity.getDiagnosticos().add(diag);
             }
         }

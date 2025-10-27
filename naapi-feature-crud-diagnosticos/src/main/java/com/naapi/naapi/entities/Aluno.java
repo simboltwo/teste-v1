@@ -5,12 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Where;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "TbAluno")
+@Where(clause = "ic_ativo = true") 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,6 +38,10 @@ public class Aluno {
 
     @Column(name = "IcPrioridade")
     private Boolean prioridadeAtendimento;
+
+    @Builder.Default
+    @Column(name = "IcAtivo", nullable = false)
+    private Boolean ativo = true;
 
     @ManyToOne
     @JoinColumn(name = "CdCurso")

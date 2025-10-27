@@ -22,8 +22,8 @@ public class AlunoDTO {
     private String matricula;
     private String foto;
     private Boolean prioridadeAtendimento;
+    private Boolean ativo;
 
-    // DTOs dos relacionamentos
     private CursoDTO curso;
     private TurmaDTO turma;
 
@@ -37,6 +37,7 @@ public class AlunoDTO {
         this.matricula = entity.getMatricula();
         this.foto = entity.getFoto();
         this.prioridadeAtendimento = entity.getPrioridadeAtendimento();
+        this.ativo = entity.getAtivo();
 
         if (entity.getCurso() != null) {
             this.curso = new CursoDTO(entity.getCurso());

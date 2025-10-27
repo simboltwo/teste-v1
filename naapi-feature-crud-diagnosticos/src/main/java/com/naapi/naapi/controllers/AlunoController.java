@@ -22,8 +22,14 @@ public class AlunoController {
     private final AlunoService service;
 
     @GetMapping
-    public ResponseEntity<List<AlunoDTO>> findAll() {
-        List<AlunoDTO> list = service.findAll();
+    public ResponseEntity<List<AlunoDTO>> findAll(
+            @RequestParam(value = "nome", required = false) String nome,
+            @RequestParam(value = "matricula", required = false) String matricula,
+            @RequestParam(value = "cursoId", required = false) Long cursoId,
+            @RequestParam(value = "turmaId", required = false) Long turmaId,
+            @RequestParam(value = "diagnosticoId", required = false) Long diagnosticoId
+    ) {
+        List<AlunoDTO> list = service.findAll(nome, matricula, cursoId, turmaId, diagnosticoId);
         return ResponseEntity.ok(list);
     }
 
