@@ -19,7 +19,6 @@ import java.util.List;
 public class CursoController {
     
     private final CursoService service;
-
     @GetMapping
     public ResponseEntity<List<CursoDTO>> findAll() {
         List<CursoDTO> list = service.findAll();
