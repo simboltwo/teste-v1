@@ -1,0 +1,21 @@
+package com.naapi.naapi.entities;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name = "TbTipoAtendimento")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TipoAtendimento {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "CdAtendimento")
+    private Long id;
+
+    @Column(name = "NmAtendimento", nullable = false, unique = true, length = 45)
+    private String nome;
+}
