@@ -36,6 +36,7 @@ public class UsuarioDTO {
         this.id = entity.getId();
         this.nome = entity.getNome();
         this.email = entity.getEmail();
-        entity.getPapeis().forEach(papel -> this.papeis.add(new PapelDTO(papel))); 
+        this.papeis = new HashSet<>();
+        entity.getPapeis().forEach(papel -> this.papeis.add(new PapelDTO(papel)));
     }
 }
