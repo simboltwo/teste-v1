@@ -12,7 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.config.Customizer; // <<< Verifique se este import existe
 
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,16 +25,17 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(Customizer.withDefaults()) // <<< ADICIONE ESTA LINHA PARA HABILITAR CORS
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/setup/**").permitAll()
-                
+
                 .requestMatchers(HttpMethod.GET, "/usuarios/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/usuarios/me").authenticated()
 
@@ -42,7 +43,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/usuarios/**").hasRole("COORDENADOR_NAAPI")
                 .requestMatchers(HttpMethod.PUT, "/usuarios/**").hasRole("COORDENADOR_NAAPI") // Adicionado
                 .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("COORDENADOR_NAAPI") // Adicionado
-                
+
                 .requestMatchers("/diagnosticos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
                 .requestMatchers("/cursos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
                 .requestMatchers("/turmas/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
@@ -55,7 +56,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/alunos").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
                 .requestMatchers(HttpMethod.PUT, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
                 .requestMatchers(HttpMethod.DELETE, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
-                
+
                 .requestMatchers(HttpMethod.GET, "/laudos/**").hasAnyRole(
                     "COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI",
                     "COORDENADOR_CURSO", "PROFESSOR"
@@ -73,9 +74,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/peis/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
 
                 .requestMatchers(HttpMethod.GET, "/relatorios/**").hasAnyRole(
-                    "COORDENADOR_CURSO", 
-                    "COORDENADOR_NAAPI", 
-                    "MEMBRO_TECNICO", 
+                    "COORDENADOR_CURSO",
+                    "COORDENADOR_NAAPI",
+                    "MEMBRO_TECNICO",
                     "ESTAGIARIO_NAAPI"
                 )
 
@@ -91,7 +92,7 @@ public class SecurityConfig {
             )
             .httpBasic(Customizer.withDefaults());
 
-        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
+        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // Para H2 console
 
         return http.build();
     }
@@ -99,16 +100,12 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite pedidos do teu servidor Angular local
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200")); 
-        // Permite os métodos HTTP comuns
-        configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "DELETE", "OPTIONS")); 
-        // Permite cabeçalhos comuns, incluindo Authorization para o Basic Auth
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); 
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200")); // Permite seu frontend
+        configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "DELETE", "OPTIONS")); // Métodos permitidos
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); // Cabeçalhos permitidos
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplica esta configuração a todos os caminhos da tua API ("/**")
-        source.registerCorsConfiguration("/**", configuration); 
+        source.registerCorsConfiguration("/**", configuration); // Aplica a todos os endpoints
         return source;
     }
 }
