@@ -1,18 +1,17 @@
-// src/main/java/com/naapi/naapi/controllers/LaudoController.java
 package com.naapi.naapi.controllers;
 
 import com.naapi.naapi.dtos.LaudoDTO;
-// import com.naapi.naapi.dtos.LaudoInsertDTO; // Substituído
+// import com.naapi.naapi.dtos.LaudoInsertDTO; // Não mais usado para insert
 import com.naapi.naapi.dtos.LaudoUploadDTO; // Novo DTO
 import com.naapi.naapi.services.LaudoService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.MediaType;
+import org.springframework.http.MediaType; // Importado
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartFile; // Importado
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -45,9 +44,7 @@ public class LaudoController {
         return ResponseEntity.created(uri).body(newDto);
     }
 
-    // O Update não foi solicitado para upload, então o mantemos
-    // Se precisar que o Update também aceite arquivo, ele precisará de refatoração similar
-    /*
+    /* // O Update não foi refatorado para upload de arquivo ainda.
     @PutMapping("/{id}")
     public ResponseEntity<LaudoDTO> update(@PathVariable Long id, @Valid @RequestBody LaudoInsertDTO dto) {
         LaudoDTO updatedDto = service.update(id, dto);
@@ -55,7 +52,6 @@ public class LaudoController {
     }
     */
     
-    // Delete continua igual
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);

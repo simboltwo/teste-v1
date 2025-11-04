@@ -1,11 +1,10 @@
-// src/main/java/com/naapi/naapi/services/AlunoService.java
 package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.AlunoDTO;
 import com.naapi.naapi.dtos.AlunoInsertDTO;
-import com.naapi.naapi.dtos.ResponsavelInsertDTO; // Novo Import
-import com.naapi.naapi.entities.*; // Import geral
-import com.naapi.naapi.repositories.*; // Import geral
+import com.naapi.naapi.dtos.ResponsavelInsertDTO; // Importado
+import com.naapi.naapi.entities.*; // Importado
+import com.naapi.naapi.repositories.*; // Importado
 import com.naapi.naapi.services.exceptions.BusinessException;
 import com.naapi.naapi.services.specifications.AlunoSpecifications;
 import jakarta.persistence.EntityNotFoundException;
@@ -13,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.web.multipart.MultipartFile; // Novo Import
+import org.springframework.web.multipart.MultipartFile; // Importado
 
 import java.util.List;
 import java.util.Set;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 public class AlunoService {
 
     private final AlunoRepository repository;
+
     private final CursoRepository cursoRepository;
     private final TurmaRepository turmaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
@@ -32,7 +32,6 @@ public class AlunoService {
     private final FileStorageService fileStorageService;
     private final TipoAtendimentoRepository tipoAtendimentoRepository;
     private final UsuarioRepository usuarioRepository;
-    // (O Repositório de Responsável não é necessário aqui, pois o Cascade fará a mágica)
 
     private static final Set<String> PREPOSICOES_CURTAS = Set.of(
             "e", "de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas"
@@ -40,13 +39,25 @@ public class AlunoService {
 
     @Transactional(readOnly = true)
     public List<AlunoDTO> findAll(String nome, String matricula, Long cursoId, Long turmaId, Long diagnosticoId) {
-        // ... (lógica de findAll/specifications não muda)
+        
         Specification<Aluno> spec = Specification.where(null);
-        if (nome != null && !nome.isBlank()) { spec = spec.and(AlunoSpecifications.hasNome(nome)); }
-        if (matricula != null && !matricula.isBlank()) { spec = spec.and(AlunoSpecifications.hasMatricula(matricula)); }
-        if (cursoId != null) { spec = spec.and(AlunoSpecifications.hasCursoId(cursoId)); }
-        if (turmaId != null) { spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId)); }
-        if (diagnosticoId != null) { spec = spec.and(AlunoSpecifications.hasDiagnosticoId(diagnosticoId)); }
+
+        if (nome != null && !nome.isBlank()) {
+            spec = spec.and(AlunoSpecifications.hasNome(nome));
+        }
+        if (matricula != null && !matricula.isBlank()) {
+            spec = spec.and(AlunoSpecifications.hasMatricula(matricula));
+        }
+        if (cursoId != null) {
+            spec = spec.and(AlunoSpecifications.hasCursoId(cursoId));
+        }
+        if (turmaId != null) {
+            spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId));
+        }
+        if (diagnosticoId != null) {
+            spec = spec.and(AlunoSpecifications.hasDiagnosticoId(diagnosticoId));
+        }
+
         List<Aluno> list = repository.findAll(spec);
         return list.stream().map(AlunoDTO::new).collect(Collectors.toList());
     }
@@ -73,7 +84,7 @@ public class AlunoService {
         copyDtoToEntity(dto, entity);
         entity.setAtivo(true);
         
-        // 3. Salva
+        // 3. Salva (Cascade salvará os responsáveis)
         entity = repository.save(entity);
         return new AlunoDTO(entity);
     }
@@ -87,40 +98,40 @@ public class AlunoService {
         verificarUnicidade(dto, id); 
 
         // 1. Salva a nova foto (se enviada)
-        // Se uma nova foto for enviada, ela substitui a antiga
-        // TODO: Adicionar lógica para deletar a foto antiga do storage
         String fotoUrl = fileStorageService.saveFile(foto, "fotos");
         if (fotoUrl != null) {
+            // TODO: Adicionar lógica para deletar a foto antiga do storage
             entity.setFoto(fotoUrl);
         }
         
         // 2. Copia o resto dos dados
         copyDtoToEntity(dto, entity);
         
-        // 3. Salva
+        // 3. Salva (Cascade salvará/atualizará/removerá responsáveis)
         entity = repository.save(entity);
         return new AlunoDTO(entity);
     }
 
     @Transactional
     public void delete(Long id) {
-        // ... (lógica de delete não muda)
         Aluno entity = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado com ID: " + id));
+        
         entity.setAtivo(false);
         repository.save(entity);
     }
 
     private void verificarUnicidade(AlunoInsertDTO dto, Long id) {
-        // ... (lógica de unicidade não muda)
         if (repository.existsByMatriculaAndIdNot(dto.getMatricula(), id)) {
             throw new BusinessException("A matrícula '" + dto.getMatricula() + "' já está cadastrada.");
         }
+        
         if (dto.getCpf() != null && !dto.getCpf().isBlank()) {
             if (repository.existsByCpfAndIdNot(dto.getCpf(), id)) {
                 throw new BusinessException("O CPF '" + dto.getCpf() + "' já está cadastrado.");
             }
         }
+        
         if (dto.getProcessoSipac() != null && !dto.getProcessoSipac().isBlank()) {
             if (repository.existsByProcessoSipacAndIdNot(dto.getProcessoSipac(), id)) {
                 throw new BusinessException("O Processo Sipac '" + dto.getProcessoSipac() + "' já está cadastrado.");
@@ -148,7 +159,7 @@ public class AlunoService {
         entity.setCurso(curso);
 
         Turma turma = turmaRepository.findById(dto.getTurmaId())
-                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrado com ID: ".concat(dto.getTurmaId().toString())));
+                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada com ID: ".concat(dto.getTurmaId().toString())));
         entity.setTurma(turma);
 
         // Bloco NAAPI (Simples)
@@ -156,6 +167,7 @@ public class AlunoService {
         entity.setPossuiPEI(dto.getPossuiPEI());
         entity.setProcessoSipac(dto.getProcessoSipac());
         entity.setAnotacoesNaapi(dto.getAnotacoesNaapi());
+        entity.setAdaptacoesNecessarias(dto.getAdaptacoesNecessarias()); // Campo Corrigido
         entity.setNecessidadesRelatoriosMedicos(dto.getNecessidadesRelatoriosMedicos());
         entity.setDataUltimoLaudo(dto.getDataUltimoLaudo());
 
@@ -194,8 +206,8 @@ public class AlunoService {
             }
         }
         
-        // --- NOVO BLOCO: Responsáveis (OneToMany) ---
-        entity.getResponsaveis().clear(); // Limpa a lista antiga
+        // --- NOVO BLOCO: Responsáveis (OneToMany com Cascade) ---
+        entity.getResponsaveis().clear(); // Limpa a lista antiga (orphanRemoval=true)
         if (dto.getResponsaveis() != null) {
             for (ResponsavelInsertDTO respDto : dto.getResponsaveis()) {
                 Responsavel r = Responsavel.builder()
@@ -210,20 +222,30 @@ public class AlunoService {
         }
     }
     
+    /**
+     * Gera um nome protegido (ex: "Adriano de Oliveira Carvalho" -> "Adr**** de Oli***** Car*****")
+     * Preserva preposições curtas.
+     */
     private String gerarNomeProtegido(String nomeCompleto) {
-        // ... (lógica não muda)
         if (nomeCompleto == null || nomeCompleto.isBlank()) {
             return null;
         }
+
         String[] palavras = nomeCompleto.split("\\s+");
         StringBuilder nomeProtegido = new StringBuilder();
+
         for (String palavra : palavras) {
             if (palavra.isBlank()) continue;
+
+            // Se for uma preposição curta, mantém
             if (PREPOSICOES_CURTAS.contains(palavra.toLowerCase())) {
                 nomeProtegido.append(palavra).append(" ");
-            } else {
+            } 
+            // Se for uma palavra maior, censura
+            else {
                 int tamanho = palavra.length();
-                int mostrar = Math.min(tamanho, 3);
+                int mostrar = Math.min(tamanho, 3); // Mostra até 3 letras
+
                 nomeProtegido.append(palavra.substring(0, mostrar));
                 for (int i = mostrar; i < tamanho; i++) {
                     nomeProtegido.append("*");
@@ -231,6 +253,7 @@ public class AlunoService {
                 nomeProtegido.append(" ");
             }
         }
-        return nomeProtegido.toString().trim();
+
+        return nomeProtegido.toString().trim(); // Remove o último espaço
     }
 }

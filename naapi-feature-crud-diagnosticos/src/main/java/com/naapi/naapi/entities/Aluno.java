@@ -27,33 +27,40 @@ public class Aluno {
 
     @Column(name = "NmAluno", nullable = false, length = 100)
     private String nome;
+
     @Column(name = "NmSocial", length = 100)
     private String nomeSocial;
+
     @Column(name = "CdMatricula", unique = true, nullable = false, length = 20)
     private String matricula;
+    
     @Column(name = "NmCpf", unique = true, length = 20)
     private String cpf;
+
     @Column(name = "DtNascimento")
-    private LocalDate dataNascimento;
+    private LocalDate dataNascimento; 
+
     @Column(name = "DsSerie", length = 10)
-    private String serie;
+    private String serie; 
+
     @Column(name = "DsFotoUrl")
     private String foto;
+
     @Column(name = "DsPrioridade", length = 20)
-    private String prioridade;
-    
+    private String prioridade; 
+
     @Column(name = "NmProtegido", length = 100)
     private String nomeProtegido;
+
     @Column(name = "IcProvaOutroEspaco")
     private Boolean provaOutroEspaco;
-    
-    // --- LINHA CORRIGIDA: Esta linha estava faltando ---
-    @Column(name = "DsAdaptacoesNecessarias", columnDefinition = "TEXT")
-    private String adaptacoesNecessarias;
-    
+
+    @Column(name = "DsAdaptacoesNecessarias", columnDefinition = "TEXT") // Campo Corrigido
+    private String adaptacoesNecessarias; 
+
     @Column(name = "IcPossuiPEI")
     private Boolean possuiPEI;
-    
+
     @Column(name = "DsTelefoneEstudante", length = 20)
     private String telefoneEstudante;
 
@@ -62,8 +69,10 @@ public class Aluno {
     
     @Column(name = "DsAnotacoesNaapi", columnDefinition = "TEXT")
     private String anotacoesNaapi;
+    
     @Column(name = "DsNecessidadesRelatoriosMedicos", columnDefinition = "TEXT")
     private String necessidadesRelatoriosMedicos;
+    
     @Column(name = "DtUltimoLaudo")
     private LocalDate dataUltimoLaudo;
 
@@ -71,10 +80,11 @@ public class Aluno {
     @Column(name = "IcAtivo", nullable = false)
     private Boolean ativo = true;
 
-    // Relacionamentos
+    // --- Relacionamentos Antigos (Sem Mudança) ---
     @ManyToOne
     @JoinColumn(name = "CdCurso")
     private Curso curso;
+
     @ManyToOne
     @JoinColumn(name = "CdTurma")
     private Turma turma;
@@ -89,18 +99,23 @@ public class Aluno {
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Laudo> laudos = new HashSet<>();
+
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<PEI> peis = new HashSet<>();
+
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Atendimento> atendimentos = new HashSet<>();
-
+    
     // --- NOVOS RELACIONAMENTOS ---
+
+    // 1. Múltiplos Responsáveis
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Responsavel> responsaveis = new HashSet<>();
 
+    // 2. Campos de Seleção NAAPI (viraram relacionamentos)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CdTipoAtendimentoPrincipal")
     private TipoAtendimento tipoAtendimentoPrincipal;

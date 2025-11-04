@@ -1,18 +1,18 @@
-// src/main/java/com/naapi/naapi/controllers/AlunoController.java
 package com.naapi.naapi.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper; // Novo import
+import com.fasterxml.jackson.databind.ObjectMapper; // Importado
 import com.naapi.naapi.dtos.AlunoDTO;
 import com.naapi.naapi.dtos.AlunoInsertDTO;
 import com.naapi.naapi.services.AlunoService;
+import com.naapi.naapi.services.exceptions.BusinessException;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.MediaType; // Novo import
+import org.springframework.http.MediaType; // Importado
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile; // Novo import
+import org.springframework.web.multipart.MultipartFile; // Importado
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -24,11 +24,10 @@ import java.util.List;
 public class AlunoController {
 
     private final AlunoService service;
-    private final ObjectMapper objectMapper; // --- NOVO: Para converter String JSON em DTO ---
+    private final ObjectMapper objectMapper; // --- NOVO ---
 
     @GetMapping
     public ResponseEntity<List<AlunoDTO>> findAll(
-            // ... (filtros findAll não mudam)
             @RequestParam(value = "nome", required = false) String nome,
             @RequestParam(value = "matricula", required = false) String matricula,
             @RequestParam(value = "cursoId", required = false) Long cursoId,
@@ -48,7 +47,7 @@ public class AlunoController {
     // --- MÉTODO INSERT MODIFICADO (para aceitar Foto) ---
     @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<AlunoDTO> insert(
-            @RequestPart("aluno") String alunoJson,
+            @Valid @RequestPart("aluno") String alunoJson,
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
         AlunoInsertDTO dto;
@@ -56,7 +55,8 @@ public class AlunoController {
             // Converte a string JSON "aluno" de volta para o DTO
             dto = objectMapper.readValue(alunoJson, AlunoInsertDTO.class);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao desserializar dados do aluno", e);
+            // Lança uma exceção de negócio se o JSON for inválido
+            throw new BusinessException("Erro ao desserializar dados do aluno: " + e.getMessage());
         }
 
         AlunoDTO newDto = service.insert(dto, foto); // Service agora aceita o arquivo
@@ -70,14 +70,14 @@ public class AlunoController {
     @PutMapping(value = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<AlunoDTO> update(
             @PathVariable Long id,
-            @RequestPart("aluno") String alunoJson,
+            @Valid @RequestPart("aluno") String alunoJson,
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
         AlunoInsertDTO dto;
         try {
             dto = objectMapper.readValue(alunoJson, AlunoInsertDTO.class);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao desserializar dados do aluno", e);
+            throw new BusinessException("Erro ao desserializar dados do aluno: " + e.getMessage());
         }
         
         AlunoDTO updatedDto = service.update(id, dto, foto);

@@ -24,14 +24,15 @@ public class AlunoDTO {
     private String cpf;
     private LocalDate dataNascimento;
     private String serie;
-    private String foto; 
+    private String foto; // A API continua enviando a URL da foto
     private String prioridade;
     private String nomeProtegido;
     private Boolean provaOutroEspaco;
-    private String adaptacoesNecessarias; // <-- Esta linha agora funciona
+    private String adaptacoesNecessarias; // Campo Corrigido
     private Boolean possuiPEI;
     private String telefoneEstudante;
     
+    // Campos de String para os selects NAAPI (para leitura fácil no frontend)
     private String tipoAtendimentoPrincipal;
     private String assistenteReferencia;
     private String membroNaapiReferencia;
@@ -44,12 +45,13 @@ public class AlunoDTO {
     
     private CursoDTO curso;
     private TurmaDTO turma;
+    
     @Builder.Default
     private Set<DiagnosticoDTO> diagnosticos = new HashSet<>();
 
+    // --- NOVO CAMPO ---
     @Builder.Default
     private Set<ResponsavelDTO> responsaveis = new HashSet<>();
-
 
     public AlunoDTO(Aluno entity) {
         this.id = entity.getId();
@@ -59,17 +61,13 @@ public class AlunoDTO {
         this.cpf = entity.getCpf();
         this.dataNascimento = entity.getDataNascimento();
         this.serie = entity.getSerie();
-        this.foto = entity.getFoto(); 
+        this.foto = entity.getFoto();
         this.prioridade = entity.getPrioridade();
         this.nomeProtegido = entity.getNomeProtegido();
         this.provaOutroEspaco = entity.getProvaOutroEspaco();
-        
-        // --- ESTA LINHA CAUSAVA O ERRO ---
-        this.adaptacoesNecessarias = entity.getAdaptacoesNecessarias(); // Agora funciona
-        
+        this.adaptacoesNecessarias = entity.getAdaptacoesNecessarias(); // Corrigido
         this.possuiPEI = entity.getPossuiPEI();
         this.telefoneEstudante = entity.getTelefoneEstudante();
-        
         this.processoSipac = entity.getProcessoSipac();
         this.anotacoesNaapi = entity.getAnotacoesNaapi();
         this.necessidadesRelatoriosMedicos = entity.getNecessidadesRelatoriosMedicos();
@@ -86,10 +84,16 @@ public class AlunoDTO {
                 .map(DiagnosticoDTO::new)
                 .collect(Collectors.toSet());
 
-        this.responsaveis = entity.getResponsaveis().stream()
-                .map(ResponsavelDTO::new)
-                .collect(Collectors.toSet());
+        // --- LÓGICA DE POPULAÇÃO ATUALIZADA ---
         
+        // 1. Popula a lista de responsáveis
+        if (entity.getResponsaveis() != null) {
+            this.responsaveis = entity.getResponsaveis().stream()
+                    .map(ResponsavelDTO::new)
+                    .collect(Collectors.toSet());
+        }
+        
+        // 2. Popula os campos de string a partir dos relacionamentos (com null check)
         if (entity.getTipoAtendimentoPrincipal() != null) {
             this.tipoAtendimentoPrincipal = entity.getTipoAtendimentoPrincipal().getNome();
         }
