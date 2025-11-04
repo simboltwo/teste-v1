@@ -15,6 +15,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile; // Importado
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import com.naapi.naapi.services.exceptions.BusinessException; // Já deve existir
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import java.net.URI;
 import java.util.List;
 
@@ -25,6 +31,7 @@ public class AlunoController {
 
     private final AlunoService service;
     private final ObjectMapper objectMapper; // --- NOVO ---
+    private final Validator validator;
 
     @GetMapping
     public ResponseEntity<List<AlunoDTO>> findAll(
@@ -47,19 +54,28 @@ public class AlunoController {
     // --- MÉTODO INSERT MODIFICADO (para aceitar Foto) ---
     @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<AlunoDTO> insert(
-            @Valid @RequestPart("aluno") String alunoJson,
+            @RequestPart("aluno") String alunoJson,
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
         AlunoInsertDTO dto;
         try {
-            // Converte a string JSON "aluno" de volta para o DTO
             dto = objectMapper.readValue(alunoJson, AlunoInsertDTO.class);
         } catch (Exception e) {
-            // Lança uma exceção de negócio se o JSON for inválido
             throw new BusinessException("Erro ao desserializar dados do aluno: " + e.getMessage());
         }
 
-        AlunoDTO newDto = service.insert(dto, foto); // Service agora aceita o arquivo
+        // --- NOVO: Validação Manual ---
+        Set<ConstraintViolation<AlunoInsertDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            // Se houver erros de validação (@NotBlank, @NotNull, etc.)
+            String errors = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining(", "));
+            throw new BusinessException("Erro de validação: " + errors);
+        }
+        // --- FIM DA VALIDAÇÃO ---
+
+        AlunoDTO newDto = service.insert(dto, foto); 
         
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(newDto.getId()).toUri();
@@ -70,7 +86,7 @@ public class AlunoController {
     @PutMapping(value = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<AlunoDTO> update(
             @PathVariable Long id,
-            @Valid @RequestPart("aluno") String alunoJson,
+            @RequestPart("aluno") String alunoJson,
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
         AlunoInsertDTO dto;
@@ -79,6 +95,16 @@ public class AlunoController {
         } catch (Exception e) {
             throw new BusinessException("Erro ao desserializar dados do aluno: " + e.getMessage());
         }
+
+        // --- NOVO: Validação Manual ---
+        Set<ConstraintViolation<AlunoInsertDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            String errors = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining(", "));
+            throw new BusinessException("Erro de validação: " + errors);
+        }
+        // --- FIM DA VALIDAÇÃO ---
         
         AlunoDTO updatedDto = service.update(id, dto, foto);
         return ResponseEntity.ok(updatedDto);
