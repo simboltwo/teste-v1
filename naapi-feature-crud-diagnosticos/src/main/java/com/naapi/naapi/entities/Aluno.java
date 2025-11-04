@@ -76,7 +76,7 @@ public class Aluno {
     @Column(name = "DtUltimoLaudo")
     private LocalDate dataUltimoLaudo;
 
-    @Builder.Default
+    @Builder.Default // Este @Builder.Default (para o boolean) está CORRETO e pode ficar.
     @Column(name = "IcAtivo", nullable = false)
     private Boolean ativo = true;
 
