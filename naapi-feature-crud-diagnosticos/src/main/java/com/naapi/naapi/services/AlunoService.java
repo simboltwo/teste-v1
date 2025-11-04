@@ -27,8 +27,8 @@ public class AlunoService {
     private final TurmaRepository turmaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
     
-    // --- DEPENDÊNCIA MODIFICADA ---
-    private final CloudStorageService cloudStorageService; // Era FileStorageService
+    // Serviço de nuvem para Upload
+    private final CloudStorageService cloudStorageService;
     
     private final TipoAtendimentoRepository tipoAtendimentoRepository;
     private final UsuarioRepository usuarioRepository;
@@ -39,13 +39,25 @@ public class AlunoService {
 
     @Transactional(readOnly = true)
     public List<AlunoDTO> findAll(String nome, String matricula, Long cursoId, Long turmaId, Long diagnosticoId) {
-        // ... (lógica de findAll não muda)
+        
         Specification<Aluno> spec = Specification.where(null);
-        if (nome != null && !nome.isBlank()) { spec = spec.and(AlunoSpecifications.hasNome(nome)); }
-        if (matricula != null && !matricula.isBlank()) { spec = spec.and(AlunoSpecifications.hasMatricula(matricula)); }
-        if (cursoId != null) { spec = spec.and(AlunoSpecifications.hasCursoId(cursoId)); }
-        if (turmaId != null) { spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId)); }
-        if (diagnosticoId != null) { spec = spec.and(AlunoSpecifications.hasDiagnosticoId(diagnosticoId)); }
+
+        if (nome != null && !nome.isBlank()) {
+            spec = spec.and(AlunoSpecifications.hasNome(nome));
+        }
+        if (matricula != null && !matricula.isBlank()) {
+            spec = spec.and(AlunoSpecifications.hasMatricula(matricula));
+        }
+        if (cursoId != null) {
+            spec = spec.and(AlunoSpecifications.hasCursoId(cursoId));
+        }
+        if (turmaId != null) {
+            spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId));
+        }
+        if (diagnosticoId != null) {
+            spec = spec.and(AlunoSpecifications.hasDiagnosticoId(diagnosticoId));
+        }
+
         List<Aluno> list = repository.findAll(spec);
         return list.stream().map(AlunoDTO::new).collect(Collectors.toList());
     }
@@ -61,9 +73,8 @@ public class AlunoService {
     public AlunoDTO insert(AlunoInsertDTO dto, MultipartFile foto) {
         verificarUnicidade(dto, -1L); 
         
-        Aluno entity = new Aluno();
+        Aluno entity = new Aluno(); // O NoArgsConstructor é chamado aqui
         
-        // --- LÓGICA DE UPLOAD MODIFICADA ---
         // 1. Salva a foto (se existir) no Cloudinary
         String fotoUrl = cloudStorageService.uploadFile(foto, "naapi/fotos");
         entity.setFoto(fotoUrl);
@@ -84,10 +95,9 @@ public class AlunoService {
 
         verificarUnicidade(dto, id); 
 
-        // --- LÓGICA DE UPLOAD MODIFICADA ---
         // 1. Salva a nova foto (se enviada) no Cloudinary
         if (foto != null && !foto.isEmpty()) {
-            // TODO: Adicionar lógica para deletar a foto antiga do Cloudinary (usando entity.getFoto())
+            // TODO: Adicionar lógica para deletar a foto antiga do Cloudinary
             String fotoUrl = cloudStorageService.uploadFile(foto, "naapi/fotos");
             entity.setFoto(fotoUrl);
         }
@@ -110,15 +120,16 @@ public class AlunoService {
     }
 
     private void verificarUnicidade(AlunoInsertDTO dto, Long id) {
-        // ... (lógica de unicidade não muda)
         if (repository.existsByMatriculaAndIdNot(dto.getMatricula(), id)) {
             throw new BusinessException("A matrícula '" + dto.getMatricula() + "' já está cadastrada.");
         }
+        
         if (dto.getCpf() != null && !dto.getCpf().isBlank()) {
             if (repository.existsByCpfAndIdNot(dto.getCpf(), id)) {
                 throw new BusinessException("O CPF '" + dto.getCpf() + "' já está cadastrado.");
             }
         }
+        
         if (dto.getProcessoSipac() != null && !dto.getProcessoSipac().isBlank()) {
             if (repository.existsByProcessoSipacAndIdNot(dto.getProcessoSipac(), id)) {
                 throw new BusinessException("O Processo Sipac '" + dto.getProcessoSipac() + "' já está cadastrado.");
@@ -127,7 +138,8 @@ public class AlunoService {
     }
 
     private void copyDtoToEntity(AlunoInsertDTO dto, Aluno entity) {
-        // ... (Todos os campos 'simples' - nome, cpf, prioridade, etc.)
+        
+        // Bloco Pessoal (Simples)
         entity.setNome(dto.getNome());
         entity.setNomeSocial(dto.getNomeSocial());
         entity.setMatricula(dto.getMatricula());
@@ -137,6 +149,17 @@ public class AlunoService {
         entity.setPrioridade(dto.getPrioridade());
         entity.setNomeProtegido(gerarNomeProtegido(dto.getNome())); 
         entity.setTelefoneEstudante(dto.getTelefoneEstudante());
+
+        // Bloco Acadêmico (Relacionamentos)
+        Curso curso = cursoRepository.findById(dto.getCursoId())
+                .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: ".concat(dto.getCursoId().toString())));
+        entity.setCurso(curso);
+
+        Turma turma = turmaRepository.findById(dto.getTurmaId())
+                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada com ID: ".concat(dto.getTurmaId().toString())));
+        entity.setTurma(turma);
+
+        // Bloco NAAPI (Simples)
         entity.setProvaOutroEspaco(dto.getProvaOutroEspaco());
         entity.setPossuiPEI(dto.getPossuiPEI());
         entity.setProcessoSipac(dto.getProcessoSipac());
@@ -145,15 +168,7 @@ public class AlunoService {
         entity.setNecessidadesRelatoriosMedicos(dto.getNecessidadesRelatoriosMedicos());
         entity.setDataUltimoLaudo(dto.getDataUltimoLaudo());
 
-        // ... (Relacionamentos Curso e Turma)
-        Curso curso = cursoRepository.findById(dto.getCursoId())
-                .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: ".concat(dto.getCursoId().toString())));
-        entity.setCurso(curso);
-        Turma turma = turmaRepository.findById(dto.getTurmaId())
-                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada com ID: ".concat(dto.getTurmaId().toString())));
-        entity.setTurma(turma);
-
-        // ... (Relacionamentos NAAPI por ID)
+        // Bloco NAAPI (Relacionamentos por ID)
         if (dto.getTipoAtendimentoPrincipalId() != null) {
             TipoAtendimento ta = tipoAtendimentoRepository.findById(dto.getTipoAtendimentoPrincipalId())
                     .orElseThrow(() -> new EntityNotFoundException("Tipo de Atendimento não encontrado: " + dto.getTipoAtendimentoPrincipalId()));
@@ -178,7 +193,8 @@ public class AlunoService {
             entity.setMembroNaapiReferencia(null);
         }
 
-        // ... (Relacionamento Diagnósticos)
+        // Bloco Diagnósticos (ManyToMany)
+        // A correção no Aluno.java garante que entity.getDiagnosticos() não é null
         entity.getDiagnosticos().clear();
         if (dto.getDiagnosticosId() != null) {
             for (Long diagId : dto.getDiagnosticosId()) {
@@ -188,8 +204,9 @@ public class AlunoService {
             }
         }
         
-        // ... (Relacionamento Responsáveis)
-        entity.getResponsaveis().clear();
+        // Bloco Responsáveis (OneToMany com Cascade)
+        // A correção no Aluno.java garante que entity.getResponsaveis() não é null
+        entity.getResponsaveis().clear(); 
         if (dto.getResponsaveis() != null) {
             for (ResponsavelInsertDTO respDto : dto.getResponsaveis()) {
                 Responsavel r = Responsavel.builder()
@@ -197,7 +214,7 @@ public class AlunoService {
                         .parentesco(respDto.getParentesco())
                         .telefone(respDto.getTelefone())
                         .autorizadoBuscar(respDto.getAutorizadoBuscar())
-                        .aluno(entity)
+                        .aluno(entity) 
                         .build();
                 entity.getResponsaveis().add(r);
             }
@@ -205,19 +222,23 @@ public class AlunoService {
     }
     
     private String gerarNomeProtegido(String nomeCompleto) {
-        // ... (lógica não muda)
         if (nomeCompleto == null || nomeCompleto.isBlank()) {
             return null;
         }
+
         String[] palavras = nomeCompleto.split("\\s+");
         StringBuilder nomeProtegido = new StringBuilder();
+
         for (String palavra : palavras) {
             if (palavra.isBlank()) continue;
+
             if (PREPOSICOES_CURTAS.contains(palavra.toLowerCase())) {
                 nomeProtegido.append(palavra).append(" ");
-            } else {
+            } 
+            else {
                 int tamanho = palavra.length();
                 int mostrar = Math.min(tamanho, 3);
+
                 nomeProtegido.append(palavra.substring(0, mostrar));
                 for (int i = mostrar; i < tamanho; i++) {
                     nomeProtegido.append("*");
@@ -225,6 +246,7 @@ public class AlunoService {
                 nomeProtegido.append(" ");
             }
         }
+
         return nomeProtegido.toString().trim();
     }
 }
