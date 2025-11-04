@@ -2,9 +2,9 @@ package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.AlunoDTO;
 import com.naapi.naapi.dtos.AlunoInsertDTO;
-import com.naapi.naapi.dtos.ResponsavelInsertDTO; // Importado
-import com.naapi.naapi.entities.*; // Importado
-import com.naapi.naapi.repositories.*; // Importado
+import com.naapi.naapi.dtos.ResponsavelInsertDTO;
+import com.naapi.naapi.entities.*;
+import com.naapi.naapi.repositories.*;
 import com.naapi.naapi.services.exceptions.BusinessException;
 import com.naapi.naapi.services.specifications.AlunoSpecifications;
 import jakarta.persistence.EntityNotFoundException;
@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.web.multipart.MultipartFile; // Importado
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Set;
@@ -23,13 +23,13 @@ import java.util.stream.Collectors;
 public class AlunoService {
 
     private final AlunoRepository repository;
-
     private final CursoRepository cursoRepository;
     private final TurmaRepository turmaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
     
-    // --- NOVAS DEPENDÊNCIAS INJETADAS ---
-    private final FileStorageService fileStorageService;
+    // --- DEPENDÊNCIA MODIFICADA ---
+    private final CloudStorageService cloudStorageService; // Era FileStorageService
+    
     private final TipoAtendimentoRepository tipoAtendimentoRepository;
     private final UsuarioRepository usuarioRepository;
 
@@ -39,25 +39,13 @@ public class AlunoService {
 
     @Transactional(readOnly = true)
     public List<AlunoDTO> findAll(String nome, String matricula, Long cursoId, Long turmaId, Long diagnosticoId) {
-        
+        // ... (lógica de findAll não muda)
         Specification<Aluno> spec = Specification.where(null);
-
-        if (nome != null && !nome.isBlank()) {
-            spec = spec.and(AlunoSpecifications.hasNome(nome));
-        }
-        if (matricula != null && !matricula.isBlank()) {
-            spec = spec.and(AlunoSpecifications.hasMatricula(matricula));
-        }
-        if (cursoId != null) {
-            spec = spec.and(AlunoSpecifications.hasCursoId(cursoId));
-        }
-        if (turmaId != null) {
-            spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId));
-        }
-        if (diagnosticoId != null) {
-            spec = spec.and(AlunoSpecifications.hasDiagnosticoId(diagnosticoId));
-        }
-
+        if (nome != null && !nome.isBlank()) { spec = spec.and(AlunoSpecifications.hasNome(nome)); }
+        if (matricula != null && !matricula.isBlank()) { spec = spec.and(AlunoSpecifications.hasMatricula(matricula)); }
+        if (cursoId != null) { spec = spec.and(AlunoSpecifications.hasCursoId(cursoId)); }
+        if (turmaId != null) { spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId)); }
+        if (diagnosticoId != null) { spec = spec.and(AlunoSpecifications.hasDiagnosticoId(diagnosticoId)); }
         List<Aluno> list = repository.findAll(spec);
         return list.stream().map(AlunoDTO::new).collect(Collectors.toList());
     }
@@ -69,27 +57,26 @@ public class AlunoService {
         return new AlunoDTO(entity);
     }
 
-    // --- ASSINATURA DO MÉTODO MODIFICADA ---
     @Transactional
     public AlunoDTO insert(AlunoInsertDTO dto, MultipartFile foto) {
         verificarUnicidade(dto, -1L); 
         
         Aluno entity = new Aluno();
         
-        // 1. Salva a foto (se existir) e obtém a URL
-        String fotoUrl = fileStorageService.saveFile(foto, "fotos");
+        // --- LÓGICA DE UPLOAD MODIFICADA ---
+        // 1. Salva a foto (se existir) no Cloudinary
+        String fotoUrl = cloudStorageService.uploadFile(foto, "naapi/fotos");
         entity.setFoto(fotoUrl);
         
         // 2. Copia o resto dos dados
         copyDtoToEntity(dto, entity);
         entity.setAtivo(true);
         
-        // 3. Salva (Cascade salvará os responsáveis)
+        // 3. Salva
         entity = repository.save(entity);
         return new AlunoDTO(entity);
     }
 
-    // --- ASSINATURA DO MÉTODO MODIFICADA ---
     @Transactional
     public AlunoDTO update(Long id, AlunoInsertDTO dto, MultipartFile foto) {
         Aluno entity = repository.findById(id)
@@ -97,16 +84,18 @@ public class AlunoService {
 
         verificarUnicidade(dto, id); 
 
-        // 1. Salva a nova foto (se enviada)
-        String fotoUrl = fileStorageService.saveFile(foto, "fotos");
-        if (fotoUrl != null) {
+        // --- LÓGICA DE UPLOAD MODIFICADA ---
+        // 1. Salva a nova foto (se enviada) no Cloudinary
+        if (foto != null && !foto.isEmpty()) {
+            // TODO: Adicionar lógica para deletar a foto antiga do Cloudinary (usando entity.getFoto())
+            String fotoUrl = cloudStorageService.uploadFile(foto, "naapi/fotos");
             entity.setFoto(fotoUrl);
         }
         
         // 2. Copia o resto dos dados
         copyDtoToEntity(dto, entity);
         
-        // 3. Salva (Cascade salvará/atualizará/removerá responsáveis)
+        // 3. Salva
         entity = repository.save(entity);
         return new AlunoDTO(entity);
     }
@@ -121,16 +110,15 @@ public class AlunoService {
     }
 
     private void verificarUnicidade(AlunoInsertDTO dto, Long id) {
+        // ... (lógica de unicidade não muda)
         if (repository.existsByMatriculaAndIdNot(dto.getMatricula(), id)) {
             throw new BusinessException("A matrícula '" + dto.getMatricula() + "' já está cadastrada.");
         }
-        
         if (dto.getCpf() != null && !dto.getCpf().isBlank()) {
             if (repository.existsByCpfAndIdNot(dto.getCpf(), id)) {
                 throw new BusinessException("O CPF '" + dto.getCpf() + "' já está cadastrado.");
             }
         }
-        
         if (dto.getProcessoSipac() != null && !dto.getProcessoSipac().isBlank()) {
             if (repository.existsByProcessoSipacAndIdNot(dto.getProcessoSipac(), id)) {
                 throw new BusinessException("O Processo Sipac '" + dto.getProcessoSipac() + "' já está cadastrado.");
@@ -138,10 +126,8 @@ public class AlunoService {
         }
     }
 
-    // --- MÉTODO copyDtoToEntity TOTALMENTE REFATORADO ---
     private void copyDtoToEntity(AlunoInsertDTO dto, Aluno entity) {
-        
-        // Bloco Pessoal (Simples)
+        // ... (Todos os campos 'simples' - nome, cpf, prioridade, etc.)
         entity.setNome(dto.getNome());
         entity.setNomeSocial(dto.getNomeSocial());
         entity.setMatricula(dto.getMatricula());
@@ -151,26 +137,23 @@ public class AlunoService {
         entity.setPrioridade(dto.getPrioridade());
         entity.setNomeProtegido(gerarNomeProtegido(dto.getNome())); 
         entity.setTelefoneEstudante(dto.getTelefoneEstudante());
-
-        // Bloco Acadêmico (Relacionamentos)
-        Curso curso = cursoRepository.findById(dto.getCursoId())
-                .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: ".concat(dto.getCursoId().toString())));
-        entity.setCurso(curso);
-
-        Turma turma = turmaRepository.findById(dto.getTurmaId())
-                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada com ID: ".concat(dto.getTurmaId().toString())));
-        entity.setTurma(turma);
-
-        // Bloco NAAPI (Simples)
         entity.setProvaOutroEspaco(dto.getProvaOutroEspaco());
         entity.setPossuiPEI(dto.getPossuiPEI());
         entity.setProcessoSipac(dto.getProcessoSipac());
         entity.setAnotacoesNaapi(dto.getAnotacoesNaapi());
-        entity.setAdaptacoesNecessarias(dto.getAdaptacoesNecessarias()); // Campo Corrigido
+        entity.setAdaptacoesNecessarias(dto.getAdaptacoesNecessarias());
         entity.setNecessidadesRelatoriosMedicos(dto.getNecessidadesRelatoriosMedicos());
         entity.setDataUltimoLaudo(dto.getDataUltimoLaudo());
 
-        // Bloco NAAPI (Relacionamentos por ID)
+        // ... (Relacionamentos Curso e Turma)
+        Curso curso = cursoRepository.findById(dto.getCursoId())
+                .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: ".concat(dto.getCursoId().toString())));
+        entity.setCurso(curso);
+        Turma turma = turmaRepository.findById(dto.getTurmaId())
+                .orElseThrow(() -> new EntityNotFoundException("Turma não encontrada com ID: ".concat(dto.getTurmaId().toString())));
+        entity.setTurma(turma);
+
+        // ... (Relacionamentos NAAPI por ID)
         if (dto.getTipoAtendimentoPrincipalId() != null) {
             TipoAtendimento ta = tipoAtendimentoRepository.findById(dto.getTipoAtendimentoPrincipalId())
                     .orElseThrow(() -> new EntityNotFoundException("Tipo de Atendimento não encontrado: " + dto.getTipoAtendimentoPrincipalId()));
@@ -195,7 +178,7 @@ public class AlunoService {
             entity.setMembroNaapiReferencia(null);
         }
 
-        // Bloco Diagnósticos (ManyToMany)
+        // ... (Relacionamento Diagnósticos)
         entity.getDiagnosticos().clear();
         if (dto.getDiagnosticosId() != null) {
             for (Long diagId : dto.getDiagnosticosId()) {
@@ -205,8 +188,8 @@ public class AlunoService {
             }
         }
         
-        // --- NOVO BLOCO: Responsáveis (OneToMany com Cascade) ---
-        entity.getResponsaveis().clear(); // Limpa a lista antiga (orphanRemoval=true)
+        // ... (Relacionamento Responsáveis)
+        entity.getResponsaveis().clear();
         if (dto.getResponsaveis() != null) {
             for (ResponsavelInsertDTO respDto : dto.getResponsaveis()) {
                 Responsavel r = Responsavel.builder()
@@ -214,37 +197,27 @@ public class AlunoService {
                         .parentesco(respDto.getParentesco())
                         .telefone(respDto.getTelefone())
                         .autorizadoBuscar(respDto.getAutorizadoBuscar())
-                        .aluno(entity) // Associa o responsável ao aluno
+                        .aluno(entity)
                         .build();
                 entity.getResponsaveis().add(r);
             }
         }
     }
     
-    /**
-     * Gera um nome protegido (ex: "Adriano de Oliveira Carvalho" -> "Adr**** de Oli***** Car*****")
-     * Preserva preposições curtas.
-     */
     private String gerarNomeProtegido(String nomeCompleto) {
+        // ... (lógica não muda)
         if (nomeCompleto == null || nomeCompleto.isBlank()) {
             return null;
         }
-
         String[] palavras = nomeCompleto.split("\\s+");
         StringBuilder nomeProtegido = new StringBuilder();
-
         for (String palavra : palavras) {
             if (palavra.isBlank()) continue;
-
-            // Se for uma preposição curta, mantém
             if (PREPOSICOES_CURTAS.contains(palavra.toLowerCase())) {
                 nomeProtegido.append(palavra).append(" ");
-            } 
-            // Se for uma palavra maior, censura
-            else {
+            } else {
                 int tamanho = palavra.length();
-                int mostrar = Math.min(tamanho, 3); // Mostra até 3 letras
-
+                int mostrar = Math.min(tamanho, 3);
                 nomeProtegido.append(palavra.substring(0, mostrar));
                 for (int i = mostrar; i < tamanho; i++) {
                     nomeProtegido.append("*");
@@ -252,7 +225,6 @@ public class AlunoService {
                 nomeProtegido.append(" ");
             }
         }
-
-        return nomeProtegido.toString().trim(); // Remove o último espaço
+        return nomeProtegido.toString().trim();
     }
 }
