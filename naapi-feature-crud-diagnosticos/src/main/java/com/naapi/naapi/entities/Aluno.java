@@ -55,7 +55,7 @@ public class Aluno {
     @Column(name = "IcProvaOutroEspaco")
     private Boolean provaOutroEspaco;
 
-    @Column(name = "DsAdaptacoesNecessarias", columnDefinition = "TEXT") // Campo Corrigido
+    @Column(name = "DsAdaptacoesNecessarias", columnDefinition = "TEXT")
     private String adaptacoesNecessarias; 
 
     @Column(name = "IcPossuiPEI")
@@ -80,7 +80,7 @@ public class Aluno {
     @Column(name = "IcAtivo", nullable = false)
     private Boolean ativo = true;
 
-    // --- Relacionamentos Antigos (Sem Mudança) ---
+    // --- Relacionamentos Antigos ---
     @ManyToOne
     @JoinColumn(name = "CdCurso")
     private Curso curso;
@@ -89,33 +89,30 @@ public class Aluno {
     @JoinColumn(name = "CdTurma")
     private Turma turma;
 
+    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
     @ManyToMany
     @JoinTable(name = "TbAlunoDiagnostico",
             joinColumns = @JoinColumn(name = "CdAluno"),
             inverseJoinColumns = @JoinColumn(name = "CdDiagnostico"))
-    @Builder.Default
     private Set<Diagnostico> diagnosticos = new HashSet<>();
 
+    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private Set<Laudo> laudos = new HashSet<>();
 
+    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private Set<PEI> peis = new HashSet<>();
 
+    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private Set<Atendimento> atendimentos = new HashSet<>();
     
-    // --- NOVOS RELACIONAMENTOS ---
-
-    // 1. Múltiplos Responsáveis
+    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private Set<Responsavel> responsaveis = new HashSet<>();
 
-    // 2. Campos de Seleção NAAPI (viraram relacionamentos)
+    // --- Novos Relacionamentos (Estes podem ser nulos, está correto) ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CdTipoAtendimentoPrincipal")
     private TipoAtendimento tipoAtendimentoPrincipal;
