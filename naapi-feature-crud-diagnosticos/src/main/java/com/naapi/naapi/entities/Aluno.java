@@ -20,6 +20,7 @@ import java.util.Set;
 @Builder
 public class Aluno {
 
+    // ... (campos de ID, nome, matricula, etc., permanecem iguais)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CdAluno")
@@ -76,7 +77,7 @@ public class Aluno {
     @Column(name = "DtUltimoLaudo")
     private LocalDate dataUltimoLaudo;
 
-    @Builder.Default // Este @Builder.Default (para o boolean) está CORRETO e pode ficar.
+    @Builder.Default
     @Column(name = "IcAtivo", nullable = false)
     private Boolean ativo = true;
 
@@ -89,27 +90,32 @@ public class Aluno {
     @JoinColumn(name = "CdTurma")
     private Turma turma;
 
-    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
+    // --- CORREÇÃO: Adicionar @Builder.Default ---
     @ManyToMany
     @JoinTable(name = "TbAlunoDiagnostico",
             joinColumns = @JoinColumn(name = "CdAluno"),
             inverseJoinColumns = @JoinColumn(name = "CdDiagnostico"))
+    @Builder.Default // <<< ADICIONE AQUI
     private Set<Diagnostico> diagnosticos = new HashSet<>();
 
-    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
+    // --- CORREÇÃO: Adicionar @Builder.Default ---
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default // <<< ADICIONE AQUI
     private Set<Laudo> laudos = new HashSet<>();
 
-    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
+    // --- CORREÇÃO: Adicionar @Builder.Default ---
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default // <<< ADICIONE AQUI
     private Set<PEI> peis = new HashSet<>();
 
-    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
+    // --- CORREÇÃO: Adicionar @Builder.Default ---
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default // <<< ADICIONE AQUI
     private Set<Atendimento> atendimentos = new HashSet<>();
     
-    // --- CORREÇÃO DE INICIALIZAÇÃO (Removido @Builder.Default) ---
+    // --- CORREÇÃO: Adicionar @Builder.Default ---
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default // <<< ADICIONE AQUI
     private Set<Responsavel> responsaveis = new HashSet<>();
 
     // --- Novos Relacionamentos (Estes podem ser nulos, está correto) ---
