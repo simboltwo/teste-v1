@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate; // Importar
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,57 +21,59 @@ public class AlunoDTO {
     private String nome;
     private String nomeSocial;
     private String matricula;
-    private String cpf; // NOVO
-    private LocalDate dataNascimento; // NOVO
-    private String serie; // NOVO
-    private String foto;
-    private String prioridade; // ALTERADO (era Boolean prioridadeAtendimento)
-    private String nomeProtegido; // NOVO
-    private Boolean provaOutroEspaco; // NOVO
-    private String adaptacoesNecessarias; // NOVO
-    private Boolean possuiPEI; // NOVO
-    private String telefoneEstudante; // NOVO
-    private String telefoneResponsavel; // NOVO
-    private String tipoAtendimentoPrincipal; // NOVO
-    private String assistenteReferencia; // NOVO
-    private String membroNaapiReferencia; // NOVO
-    private String processoSipac; // NOVO
-    private Boolean paisAutorizados; // NOVO
-    private String anotacoesNaapi; // NOVO
-    private String necessidadesRelatoriosMedicos; // NOVO
-    private LocalDate dataUltimoLaudo; // NOVO
+    private String cpf;
+    private LocalDate dataNascimento;
+    private String serie;
+    private String foto; 
+    private String prioridade;
+    private String nomeProtegido;
+    private Boolean provaOutroEspaco;
+    private String adaptacoesNecessarias; // <-- Esta linha agora funciona
+    private Boolean possuiPEI;
+    private String telefoneEstudante;
+    
+    private String tipoAtendimentoPrincipal;
+    private String assistenteReferencia;
+    private String membroNaapiReferencia;
+    
+    private String processoSipac;
+    private String anotacoesNaapi;
+    private String necessidadesRelatoriosMedicos;
+    private LocalDate dataUltimoLaudo;
     private Boolean ativo;
-
+    
     private CursoDTO curso;
     private TurmaDTO turma;
-
     @Builder.Default
     private Set<DiagnosticoDTO> diagnosticos = new HashSet<>();
+
+    @Builder.Default
+    private Set<ResponsavelDTO> responsaveis = new HashSet<>();
+
 
     public AlunoDTO(Aluno entity) {
         this.id = entity.getId();
         this.nome = entity.getNome();
         this.nomeSocial = entity.getNomeSocial();
         this.matricula = entity.getMatricula();
-        this.cpf = entity.getCpf(); // NOVO
-        this.dataNascimento = entity.getDataNascimento(); // NOVO
-        this.serie = entity.getSerie(); // NOVO
-        this.foto = entity.getFoto();
-        this.prioridade = entity.getPrioridade(); // ALTERADO
-        this.nomeProtegido = entity.getNomeProtegido(); // NOVO
-        this.provaOutroEspaco = entity.getProvaOutroEspaco(); // NOVO
-        this.adaptacoesNecessarias = entity.getAdaptacoesNecessarias(); // NOVO
-        this.possuiPEI = entity.getPossuiPEI(); // NOVO
-        this.telefoneEstudante = entity.getTelefoneEstudante(); // NOVO
-        this.telefoneResponsavel = entity.getTelefoneResponsavel(); // NOVO
-        this.tipoAtendimentoPrincipal = entity.getTipoAtendimentoPrincipal(); // NOVO
-        this.assistenteReferencia = entity.getAssistenteReferencia(); // NOVO
-        this.membroNaapiReferencia = entity.getMembroNaapiReferencia(); // NOVO
-        this.processoSipac = entity.getProcessoSipac(); // NOVO
-        this.paisAutorizados = entity.getPaisAutorizados(); // NOVO
-        this.anotacoesNaapi = entity.getAnotacoesNaapi(); // NOVO
-        this.necessidadesRelatoriosMedicos = entity.getNecessidadesRelatoriosMedicos(); // NOVO
-        this.dataUltimoLaudo = entity.getDataUltimoLaudo(); // NOVO
+        this.cpf = entity.getCpf();
+        this.dataNascimento = entity.getDataNascimento();
+        this.serie = entity.getSerie();
+        this.foto = entity.getFoto(); 
+        this.prioridade = entity.getPrioridade();
+        this.nomeProtegido = entity.getNomeProtegido();
+        this.provaOutroEspaco = entity.getProvaOutroEspaco();
+        
+        // --- ESTA LINHA CAUSAVA O ERRO ---
+        this.adaptacoesNecessarias = entity.getAdaptacoesNecessarias(); // Agora funciona
+        
+        this.possuiPEI = entity.getPossuiPEI();
+        this.telefoneEstudante = entity.getTelefoneEstudante();
+        
+        this.processoSipac = entity.getProcessoSipac();
+        this.anotacoesNaapi = entity.getAnotacoesNaapi();
+        this.necessidadesRelatoriosMedicos = entity.getNecessidadesRelatoriosMedicos();
+        this.dataUltimoLaudo = entity.getDataUltimoLaudo();
         this.ativo = entity.getAtivo();
 
         if (entity.getCurso() != null) {
@@ -83,5 +85,19 @@ public class AlunoDTO {
         this.diagnosticos = entity.getDiagnosticos().stream()
                 .map(DiagnosticoDTO::new)
                 .collect(Collectors.toSet());
+
+        this.responsaveis = entity.getResponsaveis().stream()
+                .map(ResponsavelDTO::new)
+                .collect(Collectors.toSet());
+        
+        if (entity.getTipoAtendimentoPrincipal() != null) {
+            this.tipoAtendimentoPrincipal = entity.getTipoAtendimentoPrincipal().getNome();
+        }
+        if (entity.getAssistenteReferencia() != null) {
+            this.assistenteReferencia = entity.getAssistenteReferencia().getNome();
+        }
+        if (entity.getMembroNaapiReferencia() != null) {
+            this.membroNaapiReferencia = entity.getMembroNaapiReferencia().getNome();
+        }
     }
 }

@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Where;
 
-import java.time.LocalDate; // Importar LocalDate
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,78 +27,54 @@ public class Aluno {
 
     @Column(name = "NmAluno", nullable = false, length = 100)
     private String nome;
-
     @Column(name = "NmSocial", length = 100)
     private String nomeSocial;
-
     @Column(name = "CdMatricula", unique = true, nullable = false, length = 20)
     private String matricula;
-    
-    @Column(name = "NmCpf", unique = true, length = 20) // NOVO
+    @Column(name = "NmCpf", unique = true, length = 20)
     private String cpf;
-
-    @Column(name = "DtNascimento") // NOVO
-    private LocalDate dataNascimento; 
-
-    @Column(name = "DsSerie", length = 10) // NOVO
-    private String serie; 
-
+    @Column(name = "DtNascimento")
+    private LocalDate dataNascimento;
+    @Column(name = "DsSerie", length = 10)
+    private String serie;
     @Column(name = "DsFotoUrl")
     private String foto;
-
-    @Column(name = "DsPrioridade", length = 20) // ALTERADO (era Boolean prioridadeAtendimento)
-    private String prioridade; 
-
-    @Column(name = "NmProtegido", length = 100) // NOVO
+    @Column(name = "DsPrioridade", length = 20)
+    private String prioridade;
+    
+    @Column(name = "NmProtegido", length = 100)
     private String nomeProtegido;
-
-    @Column(name = "IcProvaOutroEspaco") // NOVO
+    @Column(name = "IcProvaOutroEspaco")
     private Boolean provaOutroEspaco;
-
-    @Column(name = "DsAdaptacoesNecessarias", columnDefinition = "TEXT") // NOVO
-    private String adaptacoesNecessarias; 
-
-    @Column(name = "IcPossuiPEI") // NOVO
+    
+    // --- LINHA CORRIGIDA: Esta linha estava faltando ---
+    @Column(name = "DsAdaptacoesNecessarias", columnDefinition = "TEXT")
+    private String adaptacoesNecessarias;
+    
+    @Column(name = "IcPossuiPEI")
     private Boolean possuiPEI;
-
-    @Column(name = "DsTelefoneEstudante", length = 20) // NOVO
+    
+    @Column(name = "DsTelefoneEstudante", length = 20)
     private String telefoneEstudante;
 
-    @Column(name = "DsTelefoneResponsavel", length = 20) // NOVO
-    private String telefoneResponsavel;
-
-    @Column(name = "DsTipoAtendimentoPrincipal", length = 50) // NOVO
-    private String tipoAtendimentoPrincipal;
-
-    @Column(name = "NmAssistenteReferencia", length = 100) // NOVO
-    private String assistenteReferencia;
-    
-    @Column(name = "NmMembroNaapiReferencia", length = 100) // NOVO
-    private String membroNaapiReferencia;
-    
-    @Column(name = "CdProcessoSipac", unique = true, length = 30) // NOVO
+    @Column(name = "CdProcessoSipac", unique = true, length = 30)
     private String processoSipac;
     
-    @Column(name = "IcPaisAutorizados") // NOVO
-    private Boolean paisAutorizados;
-    
-    @Column(name = "DsAnotacoesNaapi", columnDefinition = "TEXT") // NOVO
+    @Column(name = "DsAnotacoesNaapi", columnDefinition = "TEXT")
     private String anotacoesNaapi;
-    
-    @Column(name = "DsNecessidadesRelatoriosMedicos", columnDefinition = "TEXT") // NOVO
+    @Column(name = "DsNecessidadesRelatoriosMedicos", columnDefinition = "TEXT")
     private String necessidadesRelatoriosMedicos;
-    
-    @Column(name = "DtUltimoLaudo") // NOVO
+    @Column(name = "DtUltimoLaudo")
     private LocalDate dataUltimoLaudo;
 
     @Builder.Default
     @Column(name = "IcAtivo", nullable = false)
     private Boolean ativo = true;
 
+    // Relacionamentos
     @ManyToOne
     @JoinColumn(name = "CdCurso")
     private Curso curso;
-
     @ManyToOne
     @JoinColumn(name = "CdTurma")
     private Turma turma;
@@ -113,12 +89,27 @@ public class Aluno {
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Laudo> laudos = new HashSet<>();
-
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<PEI> peis = new HashSet<>();
-
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Atendimento> atendimentos = new HashSet<>();
+
+    // --- NOVOS RELACIONAMENTOS ---
+    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<Responsavel> responsaveis = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "CdTipoAtendimentoPrincipal")
+    private TipoAtendimento tipoAtendimentoPrincipal;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "CdAssistenteReferencia")
+    private Usuario assistenteReferencia;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "CdMembroNaapiReferencia")
+    private Usuario membroNaapiReferencia;
 }
