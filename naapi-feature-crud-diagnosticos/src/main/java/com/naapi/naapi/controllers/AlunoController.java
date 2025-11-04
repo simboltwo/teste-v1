@@ -1,19 +1,24 @@
 package com.naapi.naapi.controllers;
 
-// Removidos: ObjectMapper, Validator, ConstraintViolation, Set, Collectors
+import com.fasterxml.jackson.databind.ObjectMapper; // Importado
 import com.naapi.naapi.dtos.AlunoDTO;
 import com.naapi.naapi.dtos.AlunoInsertDTO;
 import com.naapi.naapi.services.AlunoService;
-import com.naapi.naapi.services.exceptions.BusinessException; // Pode ser necessário para o service
+import com.naapi.naapi.services.exceptions.BusinessException;
 
-import jakarta.validation.Valid; // Importado
+// Remova o import @Valid de jakarta.validation
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.MediaType;
+import org.springframework.http.MediaType; // Importado
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartFile; // Importado
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import jakarta.validation.ConstraintViolation; // Importado
+import jakarta.validation.Validator; // Importado
+import java.util.Set; // Importado
+import java.util.stream.Collectors; // Importado
 
 import java.net.URI;
 import java.util.List;
@@ -24,7 +29,8 @@ import java.util.List;
 public class AlunoController {
 
     private final AlunoService service;
-    // Removidos: ObjectMapper e Validator (não são mais necessários aqui)
+    private final ObjectMapper objectMapper; // --- ADICIONADO DE VOLTA ---
+    private final Validator validator; // --- ADICIONADO DE VOLTA ---
 
     @GetMapping
     public ResponseEntity<List<AlunoDTO>> findAll(
@@ -44,16 +50,30 @@ public class AlunoController {
         return ResponseEntity.ok(dto);
     }
 
-    // --- MÉTODO INSERT MODIFICADO (para aceitar DTO e validar) ---
+    // --- MÉTODO INSERT REVERTIDO PARA A ESTRATÉGIA DE STRING JSON ---
     @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<AlunoDTO> insert(
-            // 1. Mude de String para AlunoInsertDTO
-            // 2. Adicione @Valid para acionar a validação automática
-            @RequestPart("aluno") @Valid AlunoInsertDTO dto, 
+            @RequestPart("aluno") String alunoJson, // <<< MUDADO DE VOLTA PARA STRING
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
-        // 3. Remova toda a lógica de desserialização e validação manual
-        
+        AlunoInsertDTO dto;
+        try {
+            // --- ADICIONADO: Desserialização Manual ---
+            dto = objectMapper.readValue(alunoJson, AlunoInsertDTO.class);
+        } catch (Exception e) {
+            throw new BusinessException("Erro ao desserializar dados do aluno: " + e.getMessage());
+        }
+
+        // --- ADICIONADO: Validação Manual ---
+        Set<ConstraintViolation<AlunoInsertDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            String errors = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining(", "));
+            throw new BusinessException("Erro de validação: " + errors);
+        }
+        // --- FIM DA VALIDAÇÃO ---
+
         AlunoDTO newDto = service.insert(dto, foto); 
         
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
@@ -61,16 +81,30 @@ public class AlunoController {
         return ResponseEntity.created(uri).body(newDto);
     }
 
-    // --- MÉTODO UPDATE MODIFICADO (para aceitar DTO e validar) ---
+    // --- MÉTODO UPDATE REVERTIDO PARA A ESTRATÉGIA DE STRING JSON ---
     @PutMapping(value = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<AlunoDTO> update(
             @PathVariable Long id,
-            // 1. Mude de String para AlunoInsertDTO
-            // 2. Adicione @Valid para acionar a validação automática
-            @RequestPart("aluno") @Valid AlunoInsertDTO dto,
+            @RequestPart("aluno") String alunoJson, // <<< MUDADO DE VOLTA PARA STRING
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
-        // 3. Remova toda a lógica de desserialização e validação manual
+        AlunoInsertDTO dto;
+        try {
+            // --- ADICIONADO: Desserialização Manual ---
+            dto = objectMapper.readValue(alunoJson, AlunoInsertDTO.class);
+        } catch (Exception e) {
+            throw new BusinessException("Erro ao desserializar dados do aluno: " + e.getMessage());
+        }
+
+        // --- ADICIONADO: Validação Manual ---
+        Set<ConstraintViolation<AlunoInsertDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            String errors = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining(", "));
+            throw new BusinessException("Erro de validação: " + errors);
+        }
+        // --- FIM DA VALIDAÇÃO ---
         
         AlunoDTO updatedDto = service.update(id, dto, foto);
         return ResponseEntity.ok(updatedDto);
