@@ -2,7 +2,6 @@ package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.*;
 import com.naapi.naapi.repositories.AlunoRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

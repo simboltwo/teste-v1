@@ -100,7 +100,6 @@ public class AlunoService {
         // 1. Salva a nova foto (se enviada)
         String fotoUrl = fileStorageService.saveFile(foto, "fotos");
         if (fotoUrl != null) {
-            // TODO: Adicionar lógica para deletar a foto antiga do storage
             entity.setFoto(fotoUrl);
         }
         
