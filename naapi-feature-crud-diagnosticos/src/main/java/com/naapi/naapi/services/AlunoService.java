@@ -11,7 +11,8 @@ import com.naapi.naapi.repositories.CursoRepository;
 import com.naapi.naapi.repositories.DiagnosticoRepository;
 import com.naapi.naapi.repositories.TurmaRepository;
 import com.naapi.naapi.services.exceptions.BusinessException;
-import com.naapi.naapi.services.specifications.*;
+// IMPORT CORRIGIDO AQUI:
+import com.naapi.naapi.services.specifications.AlunoSpecifications; 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 
 import java.util.List;
+import java.util.Set; 
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +33,11 @@ public class AlunoService {
     private final CursoRepository cursoRepository;
     private final TurmaRepository turmaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
+    
+    // Define palavras curtas que não devem ser censuradas
+    private static final Set<String> PREPOSICOES_CURTAS = Set.of(
+            "e", "de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas"
+    );
 
     @Transactional(readOnly = true)
     public List<AlunoDTO> findAll(String nome, String matricula, Long cursoId, Long turmaId, Long diagnosticoId) {
@@ -66,9 +73,8 @@ public class AlunoService {
 
     @Transactional
     public AlunoDTO insert(AlunoInsertDTO dto) {
-        if (repository.existsByMatriculaAndIdNot(dto.getMatricula(), -1L)) {
-            throw new BusinessException("A matrícula '" + dto.getMatricula() + "' já está cadastrada.");
-        }
+        // ID -1L para indicar que é um novo registro na verificação de unicidade
+        verificarUnicidade(dto, -1L); 
         
         Aluno entity = new Aluno();
         copyDtoToEntity(dto, entity);
@@ -82,9 +88,8 @@ public class AlunoService {
         Aluno entity = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado com ID: " + id));
 
-        if (repository.existsByMatriculaAndIdNot(dto.getMatricula(), id)) {
-            throw new BusinessException("A matrícula '" + dto.getMatricula() + "' já está cadastrada.");
-        }
+        // Passa o ID atual para a verificação de unicidade
+        verificarUnicidade(dto, id); 
 
         copyDtoToEntity(dto, entity);
         entity = repository.save(entity);
@@ -100,12 +105,53 @@ public class AlunoService {
         repository.save(entity);
     }
 
+    // Método auxiliar para verificar campos únicos
+    private void verificarUnicidade(AlunoInsertDTO dto, Long id) {
+        if (repository.existsByMatriculaAndIdNot(dto.getMatricula(), id)) {
+            throw new BusinessException("A matrícula '" + dto.getMatricula() + "' já está cadastrada.");
+        }
+        
+        // Verifica CPF se for informado
+        if (dto.getCpf() != null && !dto.getCpf().isBlank()) {
+            if (repository.existsByCpfAndIdNot(dto.getCpf(), id)) {
+                throw new BusinessException("O CPF '" + dto.getCpf() + "' já está cadastrado.");
+            }
+        }
+        
+        // Verifica Processo Sipac se for informado
+        if (dto.getProcessoSipac() != null && !dto.getProcessoSipac().isBlank()) {
+            if (repository.existsByProcessoSipacAndIdNot(dto.getProcessoSipac(), id)) {
+                throw new BusinessException("O Processo Sipac '" + dto.getProcessoSipac() + "' já está cadastrado.");
+            }
+        }
+    }
+
     private void copyDtoToEntity(AlunoInsertDTO dto, Aluno entity) {
         entity.setNome(dto.getNome());
         entity.setNomeSocial(dto.getNomeSocial());
         entity.setMatricula(dto.getMatricula());
+        entity.setCpf(dto.getCpf());
+        entity.setDataNascimento(dto.getDataNascimento());
+        entity.setSerie(dto.getSerie());
         entity.setFoto(dto.getFoto());
-        entity.setPrioridadeAtendimento(dto.getPrioridadeAtendimento());
+        entity.setPrioridade(dto.getPrioridade());
+        
+        // Gerar nome protegido automaticamente
+        entity.setNomeProtegido(gerarNomeProtegido(dto.getNome())); 
+        
+        entity.setProvaOutroEspaco(dto.getProvaOutroEspaco());
+        entity.setAdaptacoesNecessarias(dto.getAdaptacoesNecessarias());
+        entity.setPossuiPEI(dto.getPossuiPEI());
+        entity.setTelefoneEstudante(dto.getTelefoneEstudante());
+        entity.setTelefoneResponsavel(dto.getTelefoneResponsavel());
+        entity.setTipoAtendimentoPrincipal(dto.getTipoAtendimentoPrincipal());
+        entity.setAssistenteReferencia(dto.getAssistenteReferencia());
+        entity.setMembroNaapiReferencia(dto.getMembroNaapiReferencia());
+        entity.setProcessoSipac(dto.getProcessoSipac());
+        entity.setPaisAutorizados(dto.getPaisAutorizados());
+        entity.setAnotacoesNaapi(dto.getAnotacoesNaapi());
+        entity.setNecessidadesRelatoriosMedicos(dto.getNecessidadesRelatoriosMedicos());
+        entity.setDataUltimoLaudo(dto.getDataUltimoLaudo());
 
         Curso curso = cursoRepository.findById(dto.getCursoId())
                 .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: ".concat(dto.getCursoId().toString())));
@@ -123,5 +169,40 @@ public class AlunoService {
                 entity.getDiagnosticos().add(diag);
             }
         }
+    }
+    
+    /**
+     * Gera um nome protegido (ex: "Adriano de Oliveira Carvalho" -> "Adr**** de Oli***** Car*****")
+     * Preserva preposições curtas.
+     */
+    private String gerarNomeProtegido(String nomeCompleto) {
+        if (nomeCompleto == null || nomeCompleto.isBlank()) {
+            return null;
+        }
+
+        String[] palavras = nomeCompleto.split("\\s+");
+        StringBuilder nomeProtegido = new StringBuilder();
+
+        for (String palavra : palavras) {
+            if (palavra.isBlank()) continue;
+
+            // Se for uma preposição curta, mantém
+            if (PREPOSICOES_CURTAS.contains(palavra.toLowerCase())) {
+                nomeProtegido.append(palavra).append(" ");
+            } 
+            // Se for uma palavra maior, censura
+            else {
+                int tamanho = palavra.length();
+                int mostrar = Math.min(tamanho, 3); // Mostra até 3 letras
+
+                nomeProtegido.append(palavra.substring(0, mostrar));
+                for (int i = mostrar; i < tamanho; i++) {
+                    nomeProtegido.append("*");
+                }
+                nomeProtegido.append(" ");
+            }
+        }
+
+        return nomeProtegido.toString().trim(); // Remove o último espaço
     }
 }

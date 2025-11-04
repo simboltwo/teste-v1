@@ -25,7 +25,7 @@ public class Atendimento {
     private LocalDateTime dataHora; 
 
     @Column(name = "DsDescricao", columnDefinition = "TEXT")
-    private String descricao; 
+    private String descricao;
 
     @Column(name = "DsStatus", length = 20)
     private String status; 
