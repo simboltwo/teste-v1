@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -67,11 +66,7 @@ public class AlunoInsertDTO {
 
     private Set<Long> diagnosticosId;
     
-    // --- NOVOS CAMPOS ---
-    
-    // 1. Lista de Responsáveis
-    @Builder.Default
-    private Set<ResponsavelInsertDTO> responsaveis = new HashSet<>();
+
 
     // 2. IDs dos campos de seleção NAAPI
     private Long tipoAtendimentoPrincipalId;

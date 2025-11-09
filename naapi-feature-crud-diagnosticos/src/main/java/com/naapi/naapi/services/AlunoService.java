@@ -203,22 +203,6 @@ public class AlunoService {
                 entity.getDiagnosticos().add(diag);
             }
         }
-        
-        // Bloco Responsáveis (OneToMany com Cascade)
-        // A correção no Aluno.java garante que entity.getResponsaveis() não é null
-        entity.getResponsaveis().clear(); 
-        if (dto.getResponsaveis() != null) {
-            for (ResponsavelInsertDTO respDto : dto.getResponsaveis()) {
-                Responsavel r = Responsavel.builder()
-                        .nome(respDto.getNome())
-                        .parentesco(respDto.getParentesco())
-                        .telefone(respDto.getTelefone())
-                        .autorizadoBuscar(respDto.getAutorizadoBuscar())
-                        .aluno(entity) 
-                        .build();
-                entity.getResponsaveis().add(r);
-            }
-        }
     }
     
     private String gerarNomeProtegido(String nomeCompleto) {
