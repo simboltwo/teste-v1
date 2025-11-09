@@ -15,12 +15,6 @@ public interface AlunoRepository extends JpaRepository<Aluno, Long>, JpaSpecific
 
     boolean existsByMatriculaAndIdNot(String matricula, Long id);
 
-    // NOVO - Verifica se CPF já existe para um ID diferente
-    boolean existsByCpfAndIdNot(String cpf, Long id);
-
-    // NOVO - Verifica se Processo Sipac já existe para um ID diferente
-    boolean existsByProcessoSipacAndIdNot(String processoSipac, Long id);
-
     @Query("SELECT new com.naapi.naapi.dtos.RelatorioAlunosPorCursoDTO(c.nome, COUNT(a.id)) "
         + "FROM Aluno a JOIN a.curso c "
         + "WHERE a.ativo = true "

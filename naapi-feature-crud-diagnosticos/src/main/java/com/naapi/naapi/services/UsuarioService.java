@@ -1,5 +1,6 @@
 package com.naapi.naapi.services;
 
+import com.naapi.naapi.dtos.PapelDTO;
 import com.naapi.naapi.dtos.UsuarioDTO;
 import com.naapi.naapi.dtos.UsuarioInsertDTO;
 import com.naapi.naapi.dtos.UsuarioUpdateDTO;
