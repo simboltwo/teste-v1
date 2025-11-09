@@ -102,21 +102,26 @@ public class AlunoService {
 
     // Dentro da classe AlunoService
 
+    // Dentro da classe AlunoService
+
     private void copyDtoToEntity(AlunoInsertDTO dto, Aluno entity) {
         entity.setNome(dto.getNome());
         entity.setNomeSocial(dto.getNomeSocial());
         entity.setMatricula(dto.getMatricula());
         entity.setFoto(dto.getFoto());
-
-        // --- CAMPOS ATUALIZADOS/NOVOS ---
-        // O erro desaparece aqui, pois dto.getPrioridade() agora existe
-        entity.setPrioridade(dto.getPrioridade()); 
+        
+        // Todos os campos atualizados
+        entity.setPrioridade(dto.getPrioridade());
         entity.setDataNascimento(dto.getDataNascimento());
         entity.setCpf(dto.getCpf());
         entity.setTelefoneEstudante(dto.getTelefoneEstudante());
         entity.setProvaOutroEspaco(dto.getProvaOutroEspaco());
-        // --- FIM ---
+        entity.setProcessoSipac(dto.getProcessoSipac());
+        entity.setAnotacoesNaapi(dto.getAnotacoesNaapi());
+        entity.setAdaptacoesNecessarias(dto.getAdaptacoesNecessarias());
+        entity.setNecessidadesRelatoriosMedicos(dto.getNecessidadesRelatoriosMedicos());
 
+        // ... (o resto do método para curso, turma e diagnosticos)
         Curso curso = cursoRepository.findById(dto.getCursoId())
                 .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: ".concat(dto.getCursoId().toString())));
         entity.setCurso(curso);

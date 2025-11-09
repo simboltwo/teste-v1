@@ -50,7 +50,7 @@ public class Aluno {
     @Column(name = "DtNascimento")
     private LocalDate dataNascimento;
 
-    @Column(name = "DsCpf", length = 14) // 111.222.333-44
+    @Column(name = "DsCpf", length = 14)
     private String cpf;
 
     @Column(name = "DsTelefoneEstudante", length = 20)
@@ -58,7 +58,18 @@ public class Aluno {
 
     @Column(name = "IcProvaOutroEspaco")
     private Boolean provaOutroEspaco;
-    // --- FIM NOVOS CAMPOS ---
+
+    @Column(name = "DsProcessoSipac", length = 30)
+    private String processoSipac;
+
+    @Column(name = "DsAnotacoesNaapi", columnDefinition = "TEXT")
+    private String anotacoesNaapi;
+    
+    @Column(name = "DsAdaptacoes", columnDefinition = "TEXT")
+    private String adaptacoesNecessarias;
+
+    @Column(name = "DsNecessidadesMedicas", columnDefinition = "TEXT")
+    private String necessidadesRelatoriosMedicos;
 
     @ManyToOne
     @JoinColumn(name = "CdCurso")
