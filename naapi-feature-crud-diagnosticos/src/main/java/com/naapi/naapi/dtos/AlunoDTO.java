@@ -20,7 +20,7 @@ public class AlunoDTO {
 
     private Long id;
     private String nome;
-    private String nomeSocial;
+    private String nomeSocial; // <--- CAMPO FALTAVA
     private String matricula;
     private String foto;
     private String prioridade;
@@ -46,9 +46,9 @@ public class AlunoDTO {
     public AlunoDTO(Aluno entity) {
         this.id = entity.getId();
         this.nome = entity.getNome();
-        this.nomeSocial = entity.getNomeSocial();
+        this.nomeSocial = entity.getNomeSocial(); // <--- LINHA FALTAVA
         this.matricula = entity.getMatricula();
-        this.foto = entity.getFoto();
+        this.foto = entity.getFoto(); // <--- CAMPO DA FOTO
         this.prioridade = entity.getPrioridade();
         this.ativo = entity.getAtivo();
 
