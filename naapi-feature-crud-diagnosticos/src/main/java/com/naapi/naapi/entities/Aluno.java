@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Where;
 
+import java.time.LocalDate; // Importar
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,12 +37,28 @@ public class Aluno {
     @Column(name = "DsFotoUrl")
     private String foto;
 
-    @Column(name = "IcPrioridade")
-    private Boolean prioridadeAtendimento;
+    // --- CAMPO ATUALIZADO ---
+    // Era: @Column(name = "IcPrioridade") private Boolean prioridadeAtendimento;
+    @Column(name = "DsPrioridade", length = 10) // Ex: "Baixa", "Média", "Alta"
+    private String prioridade; 
 
     @Builder.Default
     @Column(name = "IcAtivo", nullable = false)
     private Boolean ativo = true;
+
+    // --- NOVOS CAMPOS ADICIONADOS ---
+    @Column(name = "DtNascimento")
+    private LocalDate dataNascimento;
+
+    @Column(name = "DsCpf", length = 14) // 111.222.333-44
+    private String cpf;
+
+    @Column(name = "DsTelefoneEstudante", length = 20)
+    private String telefoneEstudante;
+
+    @Column(name = "IcProvaOutroEspaco")
+    private Boolean provaOutroEspaco;
+    // --- FIM NOVOS CAMPOS ---
 
     @ManyToOne
     @JoinColumn(name = "CdCurso")

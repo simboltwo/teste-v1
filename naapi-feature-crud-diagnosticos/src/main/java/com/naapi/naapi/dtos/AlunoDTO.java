@@ -21,7 +21,7 @@ public class AlunoDTO {
     private String nomeSocial;
     private String matricula;
     private String foto;
-    private Boolean prioridadeAtendimento;
+    private String prioridade;
     private Boolean ativo;
 
     private CursoDTO curso;
@@ -36,7 +36,7 @@ public class AlunoDTO {
         this.nomeSocial = entity.getNomeSocial();
         this.matricula = entity.getMatricula();
         this.foto = entity.getFoto();
-        this.prioridadeAtendimento = entity.getPrioridadeAtendimento();
+        this.prioridade = entity.getPrioridade();
         this.ativo = entity.getAtivo();
 
         if (entity.getCurso() != null) {
