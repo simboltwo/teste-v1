@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.domain.Specification;
 
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -100,15 +99,16 @@ public class AlunoService {
         repository.save(entity);
     }
 
-    // Dentro da classe AlunoService
-
-    // Dentro da classe AlunoService
-
+    // --- MÉTODO ATUALIZADO ---
     private void copyDtoToEntity(AlunoInsertDTO dto, Aluno entity) {
         entity.setNome(dto.getNome());
         entity.setNomeSocial(dto.getNomeSocial());
         entity.setMatricula(dto.getMatricula());
-        entity.setFoto(dto.getFoto());
+        
+        // A foto é definida pelo serviço de upload antes de chamar este método
+        if (dto.getFoto() != null) { 
+            entity.setFoto(dto.getFoto());
+        }
         
         // Todos os campos atualizados
         entity.setPrioridade(dto.getPrioridade());
@@ -121,7 +121,6 @@ public class AlunoService {
         entity.setAdaptacoesNecessarias(dto.getAdaptacoesNecessarias());
         entity.setNecessidadesRelatoriosMedicos(dto.getNecessidadesRelatoriosMedicos());
 
-        // ... (o resto do método para curso, turma e diagnosticos)
         Curso curso = cursoRepository.findById(dto.getCursoId())
                 .orElseThrow(() -> new EntityNotFoundException("Curso não encontrado com ID: ".concat(dto.getCursoId().toString())));
         entity.setCurso(curso);

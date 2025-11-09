@@ -35,9 +35,9 @@ public class Aluno {
     private String matricula;
 
     @Column(name = "DsFotoUrl")
-    private String foto;
+    private String foto; // Continuará a ser uma String (URL)
 
-    // --- CAMPO ATUALIZADO ---
+    // --- CAMPO ATUALIZADO (Como pediu) ---
     // Era: @Column(name = "IcPrioridade") private Boolean prioridadeAtendimento;
     @Column(name = "DsPrioridade", length = 10) // Ex: "Baixa", "Média", "Alta"
     private String prioridade; 
@@ -46,7 +46,7 @@ public class Aluno {
     @Column(name = "IcAtivo", nullable = false)
     private Boolean ativo = true;
 
-    // --- NOVOS CAMPOS ADICIONADOS ---
+    // --- NOVOS CAMPOS (Como pediu) ---
     @Column(name = "DtNascimento")
     private LocalDate dataNascimento;
 
@@ -70,6 +70,8 @@ public class Aluno {
 
     @Column(name = "DsNecessidadesMedicas", columnDefinition = "TEXT")
     private String necessidadesRelatoriosMedicos;
+    
+    // --- FIM DOS NOVOS CAMPOS ---
 
     @ManyToOne
     @JoinColumn(name = "CdCurso")

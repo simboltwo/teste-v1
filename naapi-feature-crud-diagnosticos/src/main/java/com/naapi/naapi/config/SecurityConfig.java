@@ -2,14 +2,9 @@ package com.naapi.naapi.config;
 
 import java.util.Arrays;
 
-import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpMethod; // Importar
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,10 +12,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.security.config.Customizer; // <<< Verifique se este import existe
+import org.springframework.security.config.Customizer; 
 
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+// Imports para remover o popup 401
+import org.springframework.security.web.AuthenticationEntryPoint;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
@@ -34,21 +35,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) // <<< ADICIONE ESTA LINHA PARA HABILITAR CORS
+            .cors(Customizer.withDefaults()) 
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/setup/**").permitAll()
 
+                // --- ADICIONE ESTA LINHA ---
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll() // Permite ver as fotos de perfil
+
                 .requestMatchers(HttpMethod.GET, "/usuarios/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/usuarios/me").authenticated()
 
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("COORDENADOR_NAAPI")
                 .requestMatchers(HttpMethod.GET, "/usuarios/**").hasRole("COORDENADOR_NAAPI")
-                .requestMatchers(HttpMethod.PUT, "/usuarios/**").hasRole("COORDENADOR_NAAPI") // Adicionado
-                .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("COORDENADOR_NAAPI") // Adicionado
+                .requestMatchers(HttpMethod.PUT, "/usuarios/**").hasRole("COORDENADOR_NAAPI") 
+                .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("COORDENADOR_NAAPI") 
 
+                // ... (O resto das suas regras /diagnosticos, /cursos, etc.)
                 .requestMatchers("/diagnosticos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
                 .requestMatchers("/cursos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
                 .requestMatchers("/turmas/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
@@ -95,26 +100,21 @@ public class SecurityConfig {
 
                 .anyRequest().authenticated()
             )
-            
+            // --- ATUALIZE O httpBasic (para remover o popup) ---
             .httpBasic(httpBasic -> httpBasic
                 .authenticationEntryPoint(new AuthenticationEntryPoint() {
                     @Override
                     public void commence(HttpServletRequest request, HttpServletResponse response, org.springframework.security.core.AuthenticationException authException) throws IOException {
-                        // Define o status como 401 Unauthorized
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        // Envia uma mensagem de erro JSON (opcional, mas bom)
                         response.setContentType("application/json");
                         response.setCharacterEncoding("UTF-8");
                         response.getWriter().write(
                             "{\"timestamp\": \"" + java.time.Instant.now() + "\", " +
                             "\"status\": 401, " +
                             "\"error\": \"Unauthorized\", " +
-                            "\"message\": \"Credenciais inválidas\", " +
+                            "\"message\": \"Credenciais inválidas ou token expirado\", " +
                             "\"path\": \"" + request.getRequestURI() + "\"}"
                         );
-
-                        // O mais importante: NÃO adicionamos o cabeçalho 'WWW-Authenticate'
-                        // Isto impede o popup do navegador de aparecer.
                     }
                 })
             );
@@ -127,12 +127,13 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*")); // Permite seu frontend
-        configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "DELETE", "OPTIONS")); // Métodos permitidos
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); // Cabeçalhos permitidos
+        // Permite o seu frontend local e talvez o de deploy (se souber o URL)
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200")); 
+        configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "DELETE", "OPTIONS")); 
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); 
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplica a todos os endpoints
+        source.registerCorsConfiguration("/**", configuration); 
         return source;
     }
 }
