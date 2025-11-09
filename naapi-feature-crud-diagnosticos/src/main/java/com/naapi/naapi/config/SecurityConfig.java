@@ -2,6 +2,11 @@ package com.naapi.naapi.config;
 
 import java.util.Arrays;
 
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -90,7 +95,29 @@ public class SecurityConfig {
 
                 .anyRequest().authenticated()
             )
-            .httpBasic(Customizer.withDefaults());
+            
+            .httpBasic(httpBasic -> httpBasic
+                .authenticationEntryPoint(new AuthenticationEntryPoint() {
+                    @Override
+                    public void commence(HttpServletRequest request, HttpServletResponse response, org.springframework.security.core.AuthenticationException authException) throws IOException {
+                        // Define o status como 401 Unauthorized
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        // Envia uma mensagem de erro JSON (opcional, mas bom)
+                        response.setContentType("application/json");
+                        response.setCharacterEncoding("UTF-8");
+                        response.getWriter().write(
+                            "{\"timestamp\": \"" + java.time.Instant.now() + "\", " +
+                            "\"status\": 401, " +
+                            "\"error\": \"Unauthorized\", " +
+                            "\"message\": \"Credenciais inválidas\", " +
+                            "\"path\": \"" + request.getRequestURI() + "\"}"
+                        );
+
+                        // O mais importante: NÃO adicionamos o cabeçalho 'WWW-Authenticate'
+                        // Isto impede o popup do navegador de aparecer.
+                    }
+                })
+            );
 
         http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // Para H2 console
 
