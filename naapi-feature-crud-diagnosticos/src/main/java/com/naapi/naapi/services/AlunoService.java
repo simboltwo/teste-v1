@@ -32,7 +32,15 @@ public class AlunoService {
     private final DiagnosticoRepository diagnosticoRepository;
 
     @Transactional(readOnly = true)
-    public List<AlunoDTO> findAll(String nome, String matricula, Long cursoId, Long turmaId, Long diagnosticoId) {
+    public List<AlunoDTO> findAll(
+            String nome, 
+            String matricula, 
+            // MUDANÇA 1: Aceitar List<Long>
+            List<Long> cursoIds, 
+            Long turmaId, 
+            // MUDANÇA 2: Aceitar List<Long>
+            List<Long> diagnosticoIds
+    ) {
         
         Specification<Aluno> spec = Specification.where(null);
 
@@ -42,14 +50,21 @@ public class AlunoService {
         if (matricula != null && !matricula.isBlank()) {
             spec = spec.and(AlunoSpecifications.hasMatricula(matricula));
         }
-        if (cursoId != null) {
-            spec = spec.and(AlunoSpecifications.hasCursoId(cursoId));
+        
+        // MUDANÇA 3: Verificar se a lista não está vazia
+        if (cursoIds != null && !cursoIds.isEmpty()) { 
+            // MUDANÇA 4: Chamar a nova especificação (hasCursoIds no plural)
+            spec = spec.and(AlunoSpecifications.hasCursoIds(cursoIds)); 
         }
+
         if (turmaId != null) {
             spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId));
         }
-        if (diagnosticoId != null) {
-            spec = spec.and(AlunoSpecifications.hasDiagnosticoId(diagnosticoId));
+        
+        // MUDANÇA 5: Verificar se a lista não está vazia
+        if (diagnosticoIds != null && !diagnosticoIds.isEmpty()) { 
+            // MUDANÇA 6: Chamar a nova especificação (hasDiagnosticoIds no plural)
+            spec = spec.and(AlunoSpecifications.hasDiagnosticoIds(diagnosticoIds));
         }
 
         List<Aluno> list = repository.findAll(spec);

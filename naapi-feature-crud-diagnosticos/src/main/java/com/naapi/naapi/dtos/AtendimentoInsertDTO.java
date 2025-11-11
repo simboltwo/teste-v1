@@ -17,10 +17,8 @@ import java.time.LocalDateTime;
 public class AtendimentoInsertDTO {
 
     @NotNull(message = "A data e hora são obrigatórias.")
-    @PastOrPresent(message = "A data do atendimento não pode ser no futuro.")
     private LocalDateTime dataHora;
 
-    @NotBlank(message = "A descrição é obrigatória.")
     private String descricao;
 
     @NotBlank(message = "O status é obrigatório.")

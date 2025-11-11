@@ -34,11 +34,14 @@ public class AlunoController {
     public ResponseEntity<List<AlunoDTO>> findAll(
             @RequestParam(value = "nome", required = false) String nome,
             @RequestParam(value = "matricula", required = false) String matricula,
-            @RequestParam(value = "cursoId", required = false) Long cursoId,
+            // MUDANÇA 1: Mudar de Long para List<Long>
+            @RequestParam(value = "cursoId", required = false) List<Long> cursoIds, 
             @RequestParam(value = "turmaId", required = false) Long turmaId,
-            @RequestParam(value = "diagnosticoId", required = false) Long diagnosticoId
+            // MUDANÇA 2: Mudar de Long para List<Long>
+            @RequestParam(value = "diagnosticoId", required = false) List<Long> diagnosticoIds 
     ) {
-        List<AlunoDTO> list = service.findAll(nome, matricula, cursoId, turmaId, diagnosticoId);
+        // MUDANÇA 3: Passar as variáveis corretas (plural) para o serviço
+        List<AlunoDTO> list = service.findAll(nome, matricula, cursoIds, turmaId, diagnosticoIds);
         return ResponseEntity.ok(list);
     }
 

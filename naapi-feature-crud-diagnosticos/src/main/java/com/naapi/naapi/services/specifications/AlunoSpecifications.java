@@ -5,6 +5,9 @@ import com.naapi.naapi.entities.Curso;
 import com.naapi.naapi.entities.Diagnostico;
 import com.naapi.naapi.entities.Turma;
 import jakarta.persistence.criteria.Join;
+
+import java.util.List;
+
 import org.springframework.data.jpa.domain.Specification;
 
 public class AlunoSpecifications {
@@ -37,6 +40,23 @@ public class AlunoSpecifications {
         return (root, query, criteriaBuilder) -> {
             Join<Aluno, Diagnostico> diagnosticoJoin = root.join("diagnosticos");
             return criteriaBuilder.equal(diagnosticoJoin.get("id"), diagnosticoId);
+        };
+    }
+
+    public static Specification<Aluno> hasCursoIds(List<Long> cursoIds) {
+        return (root, query, criteriaBuilder) -> {
+            Join<Aluno, Curso> cursoJoin = root.join("curso");
+            // Usa "in" em vez de "equal"
+            return cursoJoin.get("id").in(cursoIds); 
+        };
+    }
+
+    // --- MÉTODO NOVO PARA DIAGNÓSTICOS (PLURAL) ---
+    public static Specification<Aluno> hasDiagnosticoIds(List<Long> diagnosticoIds) {
+        return (root, query, criteriaBuilder) -> {
+            Join<Aluno, Diagnostico> diagnosticoJoin = root.join("diagnosticos");
+            // Usa "in" em vez de "equal"
+            return diagnosticoJoin.get("id").in(diagnosticoIds);
         };
     }
 }
