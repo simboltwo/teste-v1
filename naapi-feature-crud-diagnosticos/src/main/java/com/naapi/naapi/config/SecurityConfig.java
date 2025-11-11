@@ -127,8 +127,13 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite o seu frontend local e talvez o de deploy (se souber o URL)
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200")); 
+        
+        // MUDANÇA AQUI: Adicione a URL do seu site Netlify
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:4200", 
+            "https://naapi.netlify.app"
+        )); 
+        
         configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "DELETE", "OPTIONS")); 
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); 
 
