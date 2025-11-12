@@ -1,4 +1,15 @@
+// src/main/java/com/naapi/naapi/services/AlunoService.java
 package com.naapi.naapi.services;
+
+// --- IMPORTAÇÕES NOVAS ---
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+// --- FIM DAS IMPORTAÇÕES NOVAS ---
+import java.util.stream.Collectors;
 
 import com.naapi.naapi.dtos.AlunoDTO;
 import com.naapi.naapi.dtos.AlunoInsertDTO;
@@ -11,37 +22,38 @@ import com.naapi.naapi.repositories.CursoRepository;
 import com.naapi.naapi.repositories.DiagnosticoRepository;
 import com.naapi.naapi.repositories.TurmaRepository;
 import com.naapi.naapi.services.exceptions.BusinessException;
-import com.naapi.naapi.services.specifications.*;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.jpa.domain.Specification;
+import com.naapi.naapi.services.specifications.AlunoSpecifications;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;// ... (outros imports)
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+// ... (outros imports)
 
 @Service
 @RequiredArgsConstructor
 public class AlunoService {
 
     private final AlunoRepository repository;
-
     private final CursoRepository cursoRepository;
     private final TurmaRepository turmaRepository;
     private final DiagnosticoRepository diagnosticoRepository;
+    
+    // --- INJETAR O CLOUDINARY ---
+    private final Cloudinary cloudinary; 
 
+    // ... (o método findAll permanece igual) ...
     @Transactional(readOnly = true)
     public List<AlunoDTO> findAll(
             String nome, 
             String matricula, 
-            // MUDANÇA 1: Aceitar List<Long>
             List<Long> cursoIds, 
             Long turmaId, 
-            // MUDANÇA 2: Aceitar List<Long>
             List<Long> diagnosticoIds
     ) {
-        
+        // ... (lógica do spec)
         Specification<Aluno> spec = Specification.where(null);
 
         if (nome != null && !nome.isBlank()) {
@@ -50,20 +62,13 @@ public class AlunoService {
         if (matricula != null && !matricula.isBlank()) {
             spec = spec.and(AlunoSpecifications.hasMatricula(matricula));
         }
-        
-        // MUDANÇA 3: Verificar se a lista não está vazia
         if (cursoIds != null && !cursoIds.isEmpty()) { 
-            // MUDANÇA 4: Chamar a nova especificação (hasCursoIds no plural)
             spec = spec.and(AlunoSpecifications.hasCursoIds(cursoIds)); 
         }
-
         if (turmaId != null) {
             spec = spec.and(AlunoSpecifications.hasTurmaId(turmaId));
         }
-        
-        // MUDANÇA 5: Verificar se a lista não está vazia
         if (diagnosticoIds != null && !diagnosticoIds.isEmpty()) { 
-            // MUDANÇA 6: Chamar a nova especificação (hasDiagnosticoIds no plural)
             spec = spec.and(AlunoSpecifications.hasDiagnosticoIds(diagnosticoIds));
         }
 
@@ -71,6 +76,8 @@ public class AlunoService {
         return list.stream().map(AlunoDTO::new).collect(Collectors.toList());
     }
 
+
+    // ... (o método findById permanece igual) ...
     @Transactional(readOnly = true)
     public AlunoDTO findById(Long id) {
         Aluno entity = repository.findById(id)
@@ -78,21 +85,39 @@ public class AlunoService {
         return new AlunoDTO(entity);
     }
 
+
+    // --- MÉTODO INSERT ATUALIZADO ---
     @Transactional
-    public AlunoDTO insert(AlunoInsertDTO dto) {
+    public AlunoDTO insert(AlunoInsertDTO dto, MultipartFile file) throws IOException {
         if (repository.existsByMatriculaAndIdNot(dto.getMatricula(), -1L)) {
             throw new BusinessException("A matrícula '" + dto.getMatricula() + "' já está cadastrada.");
         }
         
         Aluno entity = new Aluno();
+        
+        // --- LÓGICA DE UPLOAD ---
+        if (file != null && !file.isEmpty()) {
+            // 1. Envia o ficheiro para o Cloudinary na pasta "naapi_fotos"
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), 
+                ObjectUtils.asMap("folder", "naapi_fotos"));
+            
+            // 2. Obtém a URL segura (https://)
+            String fotoUrl = (String) uploadResult.get("secure_url");
+            
+            // 3. Define a URL no DTO antes de salvar
+            dto.setFoto(fotoUrl);
+        }
+        // --- FIM DA LÓGICA DE UPLOAD ---
+
         copyDtoToEntity(dto, entity);
         entity.setAtivo(true);
         entity = repository.save(entity);
         return new AlunoDTO(entity);
     }
 
+    // --- MÉTODO UPDATE ATUALIZADO ---
     @Transactional
-    public AlunoDTO update(Long id, AlunoInsertDTO dto) {
+    public AlunoDTO update(Long id, AlunoInsertDTO dto, MultipartFile file) throws IOException {
         Aluno entity = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado com ID: " + id));
 
@@ -100,32 +125,59 @@ public class AlunoService {
             throw new BusinessException("A matrícula '" + dto.getMatricula() + "' já está cadastrada.");
         }
 
+        // --- LÓGICA DE UPLOAD (COM BÓNUS DE APAGAR A FOTO ANTIGA) ---
+        String oldFotoUrl = entity.getFoto(); // Guarda a URL da foto antiga
+
+        if (file != null && !file.isEmpty()) {
+            // 1. Envia o ficheiro NOVO
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), 
+                ObjectUtils.asMap("folder", "naapi_fotos"));
+            
+            String novaFotoUrl = (String) uploadResult.get("secure_url");
+            dto.setFoto(novaFotoUrl); // Define a NOVA foto no DTO
+
+            // 2. Apaga a foto ANTIGA do Cloudinary (se existir)
+            if (oldFotoUrl != null && !oldFotoUrl.isBlank()) {
+                try {
+                    // Extrai o "public_id" da URL antiga para saber qual ficheiro apagar
+                    String publicId = extractPublicIdFromUrl(oldFotoUrl);
+                    cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                } catch (Exception e) {
+                    // Não falha a operação se não conseguir apagar a foto antiga
+                    System.err.println("Erro ao apagar foto antiga do Cloudinary: " + e.getMessage());
+                }
+            }
+        }
+        // --- FIM DA LÓGICA DE UPLOAD ---
+
         copyDtoToEntity(dto, entity);
         entity = repository.save(entity);
         return new AlunoDTO(entity);
     }
 
+    // ... (o método delete permanece igual) ...
     @Transactional
     public void delete(Long id) {
         Aluno entity = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado com ID: " + id));
         
+        // NOTA: No futuro, podes querer apagar a foto do Cloudinary aqui também
+        
         entity.setAtivo(false);
         repository.save(entity);
     }
 
-    // --- MÉTODO ATUALIZADO ---
+    // ... (o método copyDtoToEntity permanece igual) ...
     private void copyDtoToEntity(AlunoInsertDTO dto, Aluno entity) {
         entity.setNome(dto.getNome());
+        // ... (resto do método igual)
         entity.setNomeSocial(dto.getNomeSocial());
         entity.setMatricula(dto.getMatricula());
         
-        // A foto é definida pelo serviço de upload antes de chamar este método
         if (dto.getFoto() != null) { 
             entity.setFoto(dto.getFoto());
         }
         
-        // Todos os campos atualizados
         entity.setPrioridade(dto.getPrioridade());
         entity.setDataNascimento(dto.getDataNascimento());
         entity.setCpf(dto.getCpf());
@@ -151,6 +203,19 @@ public class AlunoService {
                         .orElseThrow(() -> new EntityNotFoundException("Diagnóstico não encontrado com ID: ".concat(diagId.toString())));
                 entity.getDiagnosticos().add(diag);
             }
+        }
+    }
+
+    private String extractPublicIdFromUrl(String url) {
+        try {
+            // Encontra a parte depois de ".../upload/"
+            String relevantPart = url.split("/upload/")[1];
+            // Remove a versão (ex: "v12345/") se existir
+            relevantPart = relevantPart.replaceAll("v\\d+/", "");
+            // Remove a extensão do ficheiro (ex: ".png", ".jpg")
+            return relevantPart.substring(0, relevantPart.lastIndexOf('.'));
+        } catch (Exception e) {
+            return null; // Não foi possível extrair
         }
     }
 }
