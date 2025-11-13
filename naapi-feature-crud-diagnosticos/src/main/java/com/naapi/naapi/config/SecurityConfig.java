@@ -41,6 +41,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/setup/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/health").permitAll()
 
                 // --- ADICIONE ESTA LINHA ---
 
