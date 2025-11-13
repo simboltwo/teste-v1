@@ -43,7 +43,6 @@ public class SecurityConfig {
                 .requestMatchers("/setup/**").permitAll()
 
                 // --- ADICIONE ESTA LINHA ---
-                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll() // Permite ver as fotos de perfil
 
                 .requestMatchers(HttpMethod.GET, "/usuarios/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/usuarios/me").authenticated()

@@ -136,14 +136,16 @@ public class AlunoService {
             String novaFotoUrl = (String) uploadResult.get("secure_url");
             dto.setFoto(novaFotoUrl); // Define a NOVA foto no DTO
 
+            // --- INÍCIO DA MUDANÇA ---
             // 2. Apaga a foto ANTIGA do Cloudinary (se existir)
             if (oldFotoUrl != null && !oldFotoUrl.isBlank()) {
                 try {
                     // Extrai o "public_id" da URL antiga para saber qual ficheiro apagar
                     String publicId = extractPublicIdFromUrl(oldFotoUrl);
-                    cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                    if (publicId != null && !publicId.isBlank()) {
+                        cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                    }
                 } catch (Exception e) {
-                    // Não falha a operação se não conseguir apagar a foto antiga
                     System.err.println("Erro ao apagar foto antiga do Cloudinary: " + e.getMessage());
                 }
             }
@@ -208,13 +210,23 @@ public class AlunoService {
 
     private String extractPublicIdFromUrl(String url) {
         try {
-            // Encontra a parte depois de ".../upload/"
-            String relevantPart = url.split("/upload/")[1];
-            // Remove a versão (ex: "v12345/") se existir
+            // 1. Garante que é uma URL do Cloudinary
+            if (url == null || !url.contains("res.cloudinary.com")) {
+                return null; // Não é uma URL do Cloudinary, não tenta apagar
+            }
+            
+            // 2. Encontra a parte relevante depois de "/image/upload/"
+            String relevantPart = url.split("/image/upload/")[1];
+            
+            // 3. Remove a versão (ex: "v12345/") se existir
             relevantPart = relevantPart.replaceAll("v\\d+/", "");
-            // Remove a extensão do ficheiro (ex: ".png", ".jpg")
-            return relevantPart.substring(0, relevantPart.lastIndexOf('.'));
+            
+            // 4. Remove a extensão do ficheiro (ex: ".png", ".jpg")
+            String publicId = relevantPart.substring(0, relevantPart.lastIndexOf('.'));
+            return publicId;
+
         } catch (Exception e) {
+            System.err.println("Não foi possível extrair o public_id da URL: " + url);
             return null; // Não foi possível extrair
         }
     }
