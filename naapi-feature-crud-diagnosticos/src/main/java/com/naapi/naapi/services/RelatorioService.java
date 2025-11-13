@@ -19,6 +19,18 @@ public class RelatorioService {
     private final LaudoService laudoService;
     private final PeiService peiService;
 
+    // --- INÍCIO DA MUDANÇA ---
+
+    @Transactional(readOnly = true)
+    public RelatorioKpiDTO getTotalAlunosAtivos() {
+        // A entidade Aluno.java tem @Where(clause = "ic_ativo = true")
+        // Por isso, o .count() já filtra automaticamente apenas os ativos.
+        long total = alunoRepository.count(); 
+        return new RelatorioKpiDTO(total);
+    }
+
+    // --- FIM DA MUDANÇA ---
+
     @Transactional(readOnly = true)
     public List<RelatorioAlunosPorCursoDTO> getRelatorioAlunosPorCurso() {
         return alunoRepository.countAlunosPorCurso();

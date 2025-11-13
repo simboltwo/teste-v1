@@ -3,6 +3,7 @@ package com.naapi.naapi.controllers;
 import com.naapi.naapi.dtos.RelatorioAlunosPorCursoDTO;
 import com.naapi.naapi.dtos.RelatorioAlunosPorDiagnosticoDTO;
 import com.naapi.naapi.dtos.RelatorioHistoricoAlunoDTO;
+import com.naapi.naapi.dtos.RelatorioKpiDTO; // <-- 1. Importar o novo DTO
 import com.naapi.naapi.services.ExportacaoService;
 import com.naapi.naapi.services.RelatorioService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,14 @@ public class RelatorioController {
 
     private final RelatorioService relatorioService;
     private final ExportacaoService exportacaoService;
+
+    // --- 2. ADICIONAR ESTE NOVO MÉTODO ---
+    @GetMapping("/total-alunos-ativos")
+    public ResponseEntity<RelatorioKpiDTO> getTotalAlunosAtivos() {
+        RelatorioKpiDTO dto = relatorioService.getTotalAlunosAtivos();
+        return ResponseEntity.ok(dto);
+    }
+    // --- FIM DA MUDANÇA ---
 
 
     @GetMapping("/alunos-por-curso")
