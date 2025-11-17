@@ -3,9 +3,8 @@ package com.naapi.naapi.controllers;
 import com.naapi.naapi.dtos.UsuarioDTO;
 import com.naapi.naapi.dtos.UsuarioInsertDTO;
 import com.naapi.naapi.dtos.UsuarioUpdateDTO;
-// Imports dos novos DTOs
-import com.naapi.naapi.dtos.UsuarioPasswordUpdateDTO;
-import com.naapi.naapi.dtos.UsuarioSelfUpdateDTO;
+import com.naapi.naapi.dtos.UsuarioPasswordUpdateDTO; // NOVO
+import com.naapi.naapi.dtos.UsuarioSelfUpdateDTO; // NOVO
 import com.naapi.naapi.services.UsuarioService;
 
 import jakarta.validation.Valid;

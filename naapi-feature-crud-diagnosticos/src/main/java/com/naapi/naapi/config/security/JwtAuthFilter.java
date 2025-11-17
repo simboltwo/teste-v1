@@ -5,11 +5,12 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+// Removido: import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy; // <-- IMPORTAR O LAZY
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UserDetailsService; 
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,11 +18,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
-@RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
-    private final UserDetailsService userDetailsService; // O Spring vai injetar o seu UsuarioService
+    private final UserDetailsService userDetailsService;
+
+    // --- CORREÇÃO: CONSTRUTOR MANUAL COM @Lazy ---
+    public JwtAuthFilter(JwtTokenProvider tokenProvider, @Lazy UserDetailsService userDetailsService) {
+        this.tokenProvider = tokenProvider;
+        this.userDetailsService = userDetailsService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -46,7 +52,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (Exception ex) {
-                // Logar o erro de token inválido (expirado, malformado, etc.)
                  System.err.println("Não foi possível setar a autenticação do usuário: " + ex.getMessage());
             }
         }

@@ -1,6 +1,5 @@
 package com.naapi.naapi.controllers;
 
-// --- NOVOS IMPORTS ---
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.naapi.naapi.dtos.LaudoDTO;
@@ -10,13 +9,13 @@ import com.naapi.naapi.services.LaudoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.MediaType; // Importar
+import org.springframework.http.MediaType; 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile; // Importar
+import org.springframework.web.multipart.MultipartFile; 
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.io.IOException; // Importar
+import java.io.IOException; 
 import java.net.URI;
 import java.util.List;
 
@@ -27,7 +26,6 @@ public class LaudoController {
 
     private final LaudoService service;
     
-    // --- ADICIONAR OBJECTMAPPER (igual ao AlunoController) ---
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
 
@@ -37,16 +35,12 @@ public class LaudoController {
         return ResponseEntity.ok(list);
     }
 
-    // --- MÉTODO INSERT ATUALIZADO ---
     @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<LaudoDTO> insert(
             @RequestPart("laudoDTO") String laudoDtoString,
             @RequestPart("file") MultipartFile file) throws IOException {
         
-        // Desserializa o JSON string para o DTO
         LaudoInsertDTO dto = objectMapper.readValue(laudoDtoString, LaudoInsertDTO.class);
-
-        // Passa o DTO e o Ficheiro para o serviço
         LaudoDTO newDto = service.insert(dto, file);
         
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
@@ -54,7 +48,6 @@ public class LaudoController {
         return ResponseEntity.created(uri).body(newDto);
     }
 
-    // --- MÉTODO UPDATE ATUALIZADO ---
     @PutMapping(value = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<LaudoDTO> update(
             @PathVariable Long id,
@@ -62,8 +55,6 @@ public class LaudoController {
             @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         
         LaudoInsertDTO dto = objectMapper.readValue(laudoDtoString, LaudoInsertDTO.class);
-        
-        // Passa o DTO e o Ficheiro (opcional) para o serviço
         LaudoDTO updatedDto = service.update(id, dto, file);
         return ResponseEntity.ok(updatedDto);
     }

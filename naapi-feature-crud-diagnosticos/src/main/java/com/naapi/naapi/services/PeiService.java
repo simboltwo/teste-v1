@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// REMOVIDO: imports de Event
+ 
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +25,7 @@ public class PeiService {
     private final PeiRepository repository;
     private final AlunoRepository alunoRepository;
     private final UsuarioRepository usuarioRepository; 
+    // REMOVIDO: ApplicationEventPublisher
 
     @Transactional(readOnly = true)
     public List<PeiDTO> findByAlunoId(Long alunoId) {
@@ -39,7 +42,12 @@ public class PeiService {
         PEI entity = new PEI();
         copyDtoToEntity(dto, entity);
         entity = repository.save(entity);
-        return new PeiDTO(entity);
+        
+        PeiDTO newDto = new PeiDTO(entity); 
+
+        // REMOVIDO: eventPublisher.publishEvent(...)
+
+        return newDto;
     }
 
     @Transactional

@@ -1,7 +1,7 @@
 package com.naapi.naapi.config;
 
 import java.util.Arrays;
-import java.io.IOException; // Para o IOException
+import java.io.IOException;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,10 +32,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor // Adiciona o construtor para injeção final
+@RequiredArgsConstructor // Injeta o JwtAuthFilter
 public class SecurityConfig {
 
-    // Injetado via @RequiredArgsConstructor
     private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
@@ -43,7 +42,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
     
-    // NOVO: Bean necessário para o AuthController fazer a autenticação
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -60,12 +58,12 @@ public class SecurityConfig {
                 .requestMatchers("/setup/**").permitAll()
                 .requestMatchers("/health").permitAll()
                 
-                // NOVO: Permite o acesso ao endpoint de login
-                .requestMatchers("/api/auth/login").permitAll() 
-
+                // --- NOVAS REGRAS ---
+                .requestMatchers("/api/auth/login").permitAll() // Permitir login
                 .requestMatchers(HttpMethod.GET, "/usuarios/me").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/usuarios/me/detalhes").authenticated() // MUDANÇA
-                .requestMatchers(HttpMethod.PUT, "/usuarios/me/senha").authenticated() // MUDANÇA
+                .requestMatchers(HttpMethod.PUT, "/usuarios/me/detalhes").authenticated() 
+                .requestMatchers(HttpMethod.PUT, "/usuarios/me/senha").authenticated() 
+                // --- FIM NOVAS REGRAS ---
 
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("COORDENADOR_NAAPI")
                 .requestMatchers(HttpMethod.GET, "/usuarios/**").hasRole("COORDENADOR_NAAPI")
@@ -83,10 +81,10 @@ public class SecurityConfig {
                 )
                 .requestMatchers(HttpMethod.POST, "/alunos").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
                 .requestMatchers(HttpMethod.PUT, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
+                // --- NOVA REGRA PATCH ---
+                .requestMatchers(HttpMethod.PATCH, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
                 .requestMatchers(HttpMethod.DELETE, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
 
-                .requestMatchers(HttpMethod.PATCH, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
-                
                 .requestMatchers(HttpMethod.GET, "/laudos/**").hasAnyRole(
                     "COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI",
                     "COORDENADOR_CURSO", "PROFESSOR"
@@ -120,12 +118,12 @@ public class SecurityConfig {
 
                 .anyRequest().authenticated()
             )
-            // --- REMOVEMOS O .httpBasic() ---
+            // REMOVEMOS O .httpBasic() 
             
-            // --- ADICIONAMOS O FILTRO JWT ---
+            // ADICIONAMOS O FILTRO JWT
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             
-            // --- MANTEMOS O ENTRYPOINT (para customizar o erro 401) ---
+            // MANTEMOS O ENTRYPOINT (para customizar o erro 401)
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(new AuthenticationEntryPoint() {
                     @Override
@@ -158,7 +156,7 @@ public class SecurityConfig {
             "https://naapi.netlify.app"
         )); 
         
-        configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "DELETE", "OPTIONS")); 
+        configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "PATCH", "DELETE", "OPTIONS")); // Adicionei PATCH
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); 
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
