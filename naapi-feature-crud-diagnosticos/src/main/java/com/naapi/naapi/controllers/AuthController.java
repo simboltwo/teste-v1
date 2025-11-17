@@ -1,3 +1,5 @@
+// simboltwo/teste-v1/teste-v1-60a965f68afab6e5940ba599fb03c96b4df194e0/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/controllers/AuthController.java
+
 package com.naapi.naapi.controllers;
 
 import com.naapi.naapi.dtos.auth.LoginDTO;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth") // Usando /api/auth para consistência
+@RequestMapping("/auth") // <-- MUDANÇA AQUI (removido /api)
 @RequiredArgsConstructor
 public class AuthController {
 

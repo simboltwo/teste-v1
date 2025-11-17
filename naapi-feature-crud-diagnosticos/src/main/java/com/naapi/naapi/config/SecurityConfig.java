@@ -1,3 +1,5 @@
+// simboltwo/teste-v1/teste-v1-60a965f68afab6e5940ba599fb03c96b4df194e0/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/config/SecurityConfig.java
+
 package com.naapi.naapi.config;
 
 import java.util.Arrays;
@@ -58,12 +60,12 @@ public class SecurityConfig {
                 .requestMatchers("/setup/**").permitAll()
                 .requestMatchers("/health").permitAll()
                 
-                // --- NOVAS REGRAS ---
-                .requestMatchers("/api/auth/login").permitAll() // Permitir login
+                // --- MUDANÇA AQUI ---
+                .requestMatchers("/auth/login").permitAll() // Permitir login (removido /api)
                 .requestMatchers(HttpMethod.GET, "/usuarios/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/usuarios/me/detalhes").authenticated() 
                 .requestMatchers(HttpMethod.PUT, "/usuarios/me/senha").authenticated() 
-                // --- FIM NOVAS REGRAS ---
+                // --- FIM DA MUDANÇA ---
 
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("COORDENADOR_NAAPI")
                 .requestMatchers(HttpMethod.GET, "/usuarios/**").hasRole("COORDENADOR_NAAPI")
