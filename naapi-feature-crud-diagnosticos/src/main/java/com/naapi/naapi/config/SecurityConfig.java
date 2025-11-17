@@ -153,8 +153,9 @@ public class SecurityConfig {
         
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:4200", 
-            "https://naapi.netlify.app"
-        )); 
+            "https://naapi.netlify.app",
+            "https://naapi-front-v2.netlify.app" // <-- ADICIONE ESTA LINHA
+        ));
         
         configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "PATCH", "DELETE", "OPTIONS")); // Adicionei PATCH
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); 

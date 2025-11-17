@@ -4,20 +4,19 @@ import com.naapi.naapi.entities.*;
 import com.naapi.naapi.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder; // NOVO IMPORT
-import org.springframework.web.bind.annotation.GetMapping; // NOVO IMPORT
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Set; // NOVO IMPORT
+import java.util.Set;
 
 @RestController
 @RequestMapping("/setup")
 @RequiredArgsConstructor
 public class DataSeedController {
 
-    // --- NOVOS REPOSITÓRIOS ---
     private final PapelRepository papelRepository;
     private final UsuarioRepository usuarioRepository;
     private final CursoRepository cursoRepository;
@@ -25,14 +24,14 @@ public class DataSeedController {
     private final DiagnosticoRepository diagnosticoRepository;
     private final TipoAtendimentoRepository tipoAtendimentoRepository;
     private final AlunoRepository alunoRepository;
-    private final PasswordEncoder passwordEncoder; // Para criptografar a senha
+    private final PasswordEncoder passwordEncoder; 
 
-    // --- MUDANÇA: Mudei de PostMapping para GetMapping para facilitar o uso no navegador ---
+    // Mudei para GetMapping para ser fácil de rodar no navegador
     @GetMapping("/seed-all")
     public ResponseEntity<String> seedDatabase() {
         
         // Verifica se já foi populado
-        if (papelRepository.count() > 0 && usuarioRepository.count() > 0) {
+        if (usuarioRepository.count() > 0) {
             return ResponseEntity.ok("O banco de dados já estava populado. Nenhum dado foi alterado.");
         }
 
@@ -90,7 +89,7 @@ public class DataSeedController {
                 .prioridade("Baixa")
                 .curso(c1)
                 .turma(t1)
-                .diagnosticos(Set.of(d1)) // Liga a aluna Maria ao diagnóstico de Autismo
+                .diagnosticos(Set.of(d1)) 
                 .build();
             
             Aluno a2 = Aluno.builder()
