@@ -6,6 +6,7 @@ import com.naapi.naapi.entities.*;
 import com.naapi.naapi.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,7 +57,13 @@ public class DataSeedController {
             // 2. Inserir Usuários (Senha para todos é "123456") - Verifica se já existe
             String senhaCriptografada = passwordEncoder.encode("123456");
             
-            Usuario u1 = usuarioRepository.findByEmail("coordenador@naapi.com"); //
+            UserDetails userDetails1 = usuarioRepository.findByEmail("coordenador@naapi.com");
+            Usuario u1 = null;
+
+            if (userDetails1 != null) {
+                u1 = (Usuario) userDetails1; // Faz o CAST para a entidade Usuario
+            }
+            
             if (u1 == null) {
                 u1 = Usuario.builder()
                     .nome("Admin Coordenador")

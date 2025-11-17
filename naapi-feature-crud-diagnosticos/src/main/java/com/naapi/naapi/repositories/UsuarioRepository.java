@@ -12,7 +12,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // --- INÍCIO DA ADIÇÃO ---
     // Adicione este novo método para usarmos no DataSeedController
-    Usuario findByEmail(String email);
+    UserDetails findByEmail(String email);
     // --- FIM DA ADIÇÃO ---
 
     boolean existsByEmailAndIdNot(String email, Long id);
