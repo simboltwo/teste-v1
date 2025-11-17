@@ -56,15 +56,16 @@ public class DataSeedController {
             // 2. Inserir Usuários (Senha para todos é "123456") - Verifica se já existe
             String senhaCriptografada = passwordEncoder.encode("123456");
             
-            if (usuarioRepository.findByEmail("coordenador@naapi.com") == null) {
-                Usuario u1 = Usuario.builder()
+            Usuario u1 = usuarioRepository.findByEmail("coordenador@naapi.com"); //
+            if (u1 == null) {
+                u1 = Usuario.builder()
                     .nome("Admin Coordenador")
                     .email("coordenador@naapi.com")
-                    .senha(senhaCriptografada)
                     .papeis(Set.of(p1))
                     .build();
-                usuarioRepository.save(u1);
             }
+            u1.setSenha(senhaCriptografada); // Garante que a senha é "123456"
+            usuarioRepository.save(u1);
 
             if (usuarioRepository.findByEmail("membro@naapi.com") == null) {
                 Usuario u2 = Usuario.builder()
