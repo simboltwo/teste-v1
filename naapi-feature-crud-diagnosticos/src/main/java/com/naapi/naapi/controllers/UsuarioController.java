@@ -3,6 +3,9 @@ package com.naapi.naapi.controllers;
 import com.naapi.naapi.dtos.UsuarioDTO;
 import com.naapi.naapi.dtos.UsuarioInsertDTO;
 import com.naapi.naapi.dtos.UsuarioUpdateDTO;
+// Imports dos novos DTOs
+import com.naapi.naapi.dtos.UsuarioPasswordUpdateDTO;
+import com.naapi.naapi.dtos.UsuarioSelfUpdateDTO;
 import com.naapi.naapi.services.UsuarioService;
 
 import jakarta.validation.Valid;
@@ -22,17 +25,27 @@ public class UsuarioController {
 
     private final UsuarioService service;
 
+    // --- ENDPOINTS DE AUTOGESTÃO (/me) ---
+
     @GetMapping("/me")
     public ResponseEntity<UsuarioDTO> getSelf() {
         UsuarioDTO dto = service.getSelf();
         return ResponseEntity.ok(dto);
     }
 
-    @PutMapping("/me")
-    public ResponseEntity<UsuarioDTO> updateSelf(@Valid @RequestBody UsuarioUpdateDTO dto) {
-        UsuarioDTO updatedDto = service.updateSelf(dto);
+    @PutMapping("/me/detalhes")
+    public ResponseEntity<UsuarioDTO> updateSelfDetails(@Valid @RequestBody UsuarioSelfUpdateDTO dto) {
+        UsuarioDTO updatedDto = service.updateSelfDetails(dto);
         return ResponseEntity.ok(updatedDto);
     }
+
+    @PutMapping("/me/senha")
+    public ResponseEntity<Void> updateSelfPassword(@Valid @RequestBody UsuarioPasswordUpdateDTO dto) {
+        service.updateSelfPassword(dto);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- ENDPOINTS DE ADMINISTRAÇÃO (CRUD) ---
 
     @GetMapping
     public ResponseEntity<List<UsuarioDTO>> findAll() {

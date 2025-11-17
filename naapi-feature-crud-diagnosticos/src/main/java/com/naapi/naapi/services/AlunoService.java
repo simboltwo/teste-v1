@@ -4,6 +4,7 @@ package com.naapi.naapi.services;
 // --- IMPORTAÇÕES NOVAS ---
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.naapi.naapi.dtos.AlunoStatusUpdateDTO;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
@@ -167,6 +168,24 @@ public class AlunoService {
         
         entity.setAtivo(false);
         repository.save(entity);
+    }
+
+    @Transactional
+    public AlunoDTO updateStatus(Long id, AlunoStatusUpdateDTO dto) {
+        Aluno entity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Aluno não encontrado com ID: " + id));
+
+        // Atualiza os campos apenas se eles não forem nulos no DTO
+        if (dto.getPrioridade() != null) {
+            entity.setPrioridade(dto.getPrioridade());
+        }
+        
+        if (dto.getProvaOutroEspaco() != null) {
+            entity.setProvaOutroEspaco(dto.getProvaOutroEspaco());
+        }
+
+        entity = repository.save(entity);
+        return new AlunoDTO(entity);
     }
 
     // ... (o método copyDtoToEntity permanece igual) ...

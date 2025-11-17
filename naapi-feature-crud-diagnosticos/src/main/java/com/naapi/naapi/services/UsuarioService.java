@@ -4,6 +4,9 @@ import com.naapi.naapi.dtos.PapelDTO;
 import com.naapi.naapi.dtos.UsuarioDTO;
 import com.naapi.naapi.dtos.UsuarioInsertDTO;
 import com.naapi.naapi.dtos.UsuarioUpdateDTO;
+// Imports dos novos DTOs
+import com.naapi.naapi.dtos.UsuarioPasswordUpdateDTO;
+import com.naapi.naapi.dtos.UsuarioSelfUpdateDTO;
 import com.naapi.naapi.entities.Papel;
 import com.naapi.naapi.entities.Usuario;
 import com.naapi.naapi.repositories.PapelRepository;
@@ -55,6 +58,7 @@ public class UsuarioService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UsuarioDTO getSelf() {
         Usuario entity = getAuthenticatedUser();
+        // Usamos findById para garantir que o DTO venha populado corretamente
         return findById(entity.getId());
     }
 
@@ -87,8 +91,9 @@ public class UsuarioService implements UserDetailsService {
         return new UsuarioDTO(entity);
     }
 
+    // --- NOVO MÉTODO PARA ATUALIZAR DETALHES (NOME/EMAIL) ---
     @Transactional
-    public UsuarioDTO updateSelf(UsuarioUpdateDTO dto) {
+    public UsuarioDTO updateSelfDetails(UsuarioSelfUpdateDTO dto) {
         Usuario entity = getAuthenticatedUser();
         
         if (usuarioRepository.existsByEmailAndIdNot(dto.getEmail(), entity.getId())) {
@@ -102,6 +107,26 @@ public class UsuarioService implements UserDetailsService {
         return new UsuarioDTO(entity);
     }
 
+    // --- NOVO MÉTODO PARA ATUALIZAR SENHA ---
+    @Transactional
+    public void updateSelfPassword(UsuarioPasswordUpdateDTO dto) {
+        Usuario entity = getAuthenticatedUser();
+
+        // 1. Validar se a senha atual bate
+        if (!passwordEncoder.matches(dto.getSenhaAtual(), entity.getSenha())) {
+            throw new BusinessException("A 'Senha Atual' está incorreta.");
+        }
+
+        // 2. Validar se a nova senha e a confirmação batem
+        if (!dto.getNovaSenha().equals(dto.getConfirmacaoNovaSenha())) {
+            throw new BusinessException("A 'Nova Senha' e a 'Confirmação' não são iguais.");
+        }
+
+        // 3. Salvar a nova senha encriptada
+        entity.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
+        usuarioRepository.save(entity);
+    }
+
     @Transactional
     public void delete(Long id) {
         if (!usuarioRepository.existsById(id)) {
@@ -110,6 +135,7 @@ public class UsuarioService implements UserDetailsService {
         usuarioRepository.deleteById(id);
     }
 
+    // (Helper para Admin Insert)
     private void copyDtoToEntity(UsuarioInsertDTO dto, Usuario entity) {
         entity.setNome(dto.getNome());
         entity.setEmail(dto.getEmail());
@@ -122,6 +148,7 @@ public class UsuarioService implements UserDetailsService {
         }
     }
 
+    // (Helper para Admin Update)
     private void copyDtoToEntity(UsuarioUpdateDTO dto, Usuario entity) {
         entity.setNome(dto.getNome());
         entity.setEmail(dto.getEmail());

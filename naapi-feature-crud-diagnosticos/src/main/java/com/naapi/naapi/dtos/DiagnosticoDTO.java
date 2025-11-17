@@ -13,8 +13,9 @@ public class DiagnosticoDTO {
     
     private Long id;
 
+    // --- MUDANÇA AQUI ---
     @NotBlank(message = "O nome é obrigatório.")
-    @Size(min = 2, max = 45, message = "O nome deve ter entre 2 e 45 caracteres.")
+    @Size(min = 2, max = 255, message = "O nome deve ter entre 2 e 255 caracteres.") // Alterado de 45 para 255
     private String nome;
 
     @Size(max = 10, message = "O CID não pode ultrapassar 10 caracteres.")

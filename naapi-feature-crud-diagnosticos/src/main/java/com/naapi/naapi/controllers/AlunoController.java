@@ -10,6 +10,8 @@ import com.naapi.naapi.services.AlunoService;
 // REMOVE O FileUploadService
 // import com.naapi.naapi.services.FileUploadService; 
 import jakarta.validation.Valid;
+import com.naapi.naapi.dtos.AlunoStatusUpdateDTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType; 
 import org.springframework.http.ResponseEntity;
@@ -87,5 +89,14 @@ public class AlunoController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<AlunoDTO> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody AlunoStatusUpdateDTO dto) {
+        
+        AlunoDTO updatedDto = service.updateStatus(id, dto);
+        return ResponseEntity.ok(updatedDto);
     }
 }

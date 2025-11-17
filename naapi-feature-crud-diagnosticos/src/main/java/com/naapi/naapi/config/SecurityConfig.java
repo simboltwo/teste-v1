@@ -1,10 +1,11 @@
 package com.naapi.naapi.config;
 
 import java.util.Arrays;
+import java.io.IOException; // Para o IOException
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // Importar
+import org.springframework.http.HttpMethod; 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,23 +14,39 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.security.config.Customizer; 
-
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-// Imports para remover o popup 401
+// Imports para o JWT e AuthenticationManager
+import com.naapi.naapi.config.security.JwtAuthFilter; 
+import lombok.RequiredArgsConstructor; 
+import org.springframework.security.authentication.AuthenticationManager; 
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration; 
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; 
+
+// Imports para o EntryPoint (Tratamento de 401)
 import org.springframework.security.web.AuthenticationEntryPoint;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor // Adiciona o construtor para injeção final
 public class SecurityConfig {
+
+    // Injetado via @RequiredArgsConstructor
+    private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+    
+    // NOVO: Bean necessário para o AuthController fazer a autenticação
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
@@ -42,18 +59,19 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/setup/**").permitAll()
                 .requestMatchers("/health").permitAll()
-
-                // --- ADICIONE ESTA LINHA ---
+                
+                // NOVO: Permite o acesso ao endpoint de login
+                .requestMatchers("/api/auth/login").permitAll() 
 
                 .requestMatchers(HttpMethod.GET, "/usuarios/me").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/usuarios/me").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/usuarios/me/detalhes").authenticated() // MUDANÇA
+                .requestMatchers(HttpMethod.PUT, "/usuarios/me/senha").authenticated() // MUDANÇA
 
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("COORDENADOR_NAAPI")
                 .requestMatchers(HttpMethod.GET, "/usuarios/**").hasRole("COORDENADOR_NAAPI")
                 .requestMatchers(HttpMethod.PUT, "/usuarios/**").hasRole("COORDENADOR_NAAPI") 
                 .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("COORDENADOR_NAAPI") 
 
-                // ... (O resto das suas regras /diagnosticos, /cursos, etc.)
                 .requestMatchers("/diagnosticos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
                 .requestMatchers("/cursos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
                 .requestMatchers("/turmas/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO")
@@ -67,6 +85,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
                 .requestMatchers(HttpMethod.DELETE, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
 
+                .requestMatchers(HttpMethod.PATCH, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
+                
                 .requestMatchers(HttpMethod.GET, "/laudos/**").hasAnyRole(
                     "COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI",
                     "COORDENADOR_CURSO", "PROFESSOR"
@@ -100,8 +120,13 @@ public class SecurityConfig {
 
                 .anyRequest().authenticated()
             )
-            // --- ATUALIZE O httpBasic (para remover o popup) ---
-            .httpBasic(httpBasic -> httpBasic
+            // --- REMOVEMOS O .httpBasic() ---
+            
+            // --- ADICIONAMOS O FILTRO JWT ---
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            
+            // --- MANTEMOS O ENTRYPOINT (para customizar o erro 401) ---
+            .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(new AuthenticationEntryPoint() {
                     @Override
                     public void commence(HttpServletRequest request, HttpServletResponse response, org.springframework.security.core.AuthenticationException authException) throws IOException {
@@ -112,7 +137,7 @@ public class SecurityConfig {
                             "{\"timestamp\": \"" + java.time.Instant.now() + "\", " +
                             "\"status\": 401, " +
                             "\"error\": \"Unauthorized\", " +
-                            "\"message\": \"Credenciais inválidas ou token expirado\", " +
+                            "\"message\": \"Token inválido ou expirado\", " +
                             "\"path\": \"" + request.getRequestURI() + "\"}"
                         );
                     }
@@ -128,7 +153,6 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // MUDANÇA AQUI: Adicione a URL do seu site Netlify
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:4200", 
             "https://naapi.netlify.app"

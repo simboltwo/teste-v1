@@ -19,8 +19,10 @@ public class LaudoInsertDTO {
     @PastOrPresent(message = "A data de emissão não pode ser no futuro.")
     private LocalDate dataEmissao;
 
-    @NotBlank(message = "A URL do arquivo é obrigatória.")
-    private String urlArquivo;
+    // --- REMOVIDO ---
+    // @NotBlank(message = "A URL do arquivo é obrigatória.")
+    // private String urlArquivo;
+    // --- FIM DA REMOÇÃO ---
 
     private String descricao;
 

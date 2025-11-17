@@ -19,7 +19,8 @@ public class Diagnostico {
     @Column(name = "cid", unique = true)
     private String cid;
 
-    @Column(name = "NmDiagnostico", nullable = false, length = 45)
+    // --- MUDANÇA AQUI ---
+    @Column(name = "NmDiagnostico", nullable = false, length = 255) // Alterado de 45 para 255
     private String nome;
 
     @Column(name = "SIGLA", length = 10)
