@@ -8,12 +8,17 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    UserDetails loadUserByUsername(String email); // <- DEIXE ESTE COMO ESTÁ (para o Spring Security)
+    // --- INÍCIO DA CORREÇÃO ---
+    // 1. Este é o método que o Spring Security (via UsuarioService) usa.
+    // O Spring Data JPA entende "findByEmail" e busca pelo campo "email".
+    // O nome "loadUserByUsername" estava causando o crash.
+    UserDetails findByEmail(String email); //
+    // --- FIM DA CORREÇÃO ---
 
-    // --- INÍCIO DA ADIÇÃO ---
-    // Adicione este novo método para usarmos no DataSeedController
-    UserDetails findByEmail(String email);
-    // --- FIM DA ADIÇÃO ---
+    // 2. Este é o NOVO método que o DataSeedController usará.
+    // Ele retorna a entidade completa, permitindo a alteração da senha.
+    Usuario findUsuarioByEmail(String email);
 
-    boolean existsByEmailAndIdNot(String email, Long id);
+    // 3. Este método estava correto e permanece.
+    boolean existsByEmailAndIdNot(String email, Long id); //
 }
