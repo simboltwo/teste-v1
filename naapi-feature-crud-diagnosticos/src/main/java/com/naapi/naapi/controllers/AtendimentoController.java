@@ -1,9 +1,15 @@
+/*
+ * Arquivo: simboltwo/teste-v1/teste-v1-ac4c03749fe5021245d97adeb7c4827ee1afde3f/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/controllers/AtendimentoController.java
+ * Descrição: Modificado GET /aluno/{id}, adicionado GET /me e GET /{id}.
+ */
 package com.naapi.naapi.controllers;
 
 import com.naapi.naapi.dtos.AtendimentoDTO;
 import com.naapi.naapi.dtos.AtendimentoInsertDTO;
 import com.naapi.naapi.dtos.AtendimentoStatusUpdateDTO;
+import com.naapi.naapi.entities.Usuario; // Importar
 import com.naapi.naapi.services.AtendimentoService;
+import com.naapi.naapi.services.UsuarioService; // Importar
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +27,31 @@ import java.util.List;
 public class AtendimentoController {
 
     private final AtendimentoService service;
+    private final UsuarioService usuarioService; // Injetar UsuarioService
 
+    // --- INÍCIO DA MUDANÇA ---
+    @GetMapping("/{id}")
+    public ResponseEntity<AtendimentoDTO> findById(@PathVariable Long id) {
+        AtendimentoDTO dto = service.findById(id);
+        return ResponseEntity.ok(dto);
+    }
+    
     @GetMapping("/aluno/{alunoId}")
-    public ResponseEntity<List<AtendimentoDTO>> findByAlunoId(@PathVariable Long alunoId) {
-        List<AtendimentoDTO> list = service.findByAlunoId(alunoId);
+    public ResponseEntity<List<AtendimentoDTO>> findByAlunoId(
+            @PathVariable Long alunoId,
+            @RequestParam(value = "status", required = false) String status) {
+        List<AtendimentoDTO> list = service.findByAlunoId(alunoId, status);
         return ResponseEntity.ok(list);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<AtendimentoDTO>> findByResponsavel() {
+        // Pega o usuário logado
+        Usuario usuarioLogado = usuarioService.getAuthenticatedUser();
+        List<AtendimentoDTO> list = service.findByResponsavelId(usuarioLogado.getId());
+        return ResponseEntity.ok(list);
+    }
+    // --- FIM DA MUDANÇA ---
 
     @PostMapping
     public ResponseEntity<AtendimentoDTO> insert(@Valid @RequestBody AtendimentoInsertDTO dto) {

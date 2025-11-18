@@ -1,3 +1,7 @@
+/*
+ * Arquivo: simboltwo/teste-v1/teste-v1-ac4c03749fe5021245d97adeb7c4827ee1afde3f/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/services/UsuarioService.java
+ * Descrição: Alterado o método 'getAuthenticatedUser' de 'protected' para 'public'.
+ */
 package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.PapelDTO;
@@ -152,7 +156,10 @@ public class UsuarioService implements UserDetailsService {
         }
     }
 
-    protected Usuario getAuthenticatedUser() {
+    // --- INÍCIO DA CORREÇÃO ---
+    // Alterado de 'protected' para 'public'
+    public Usuario getAuthenticatedUser() {
+    // --- FIM DA CORREÇÃO ---
         try {
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             String username;

@@ -1,3 +1,7 @@
+/*
+ * Arquivo: simboltwo/teste-v1/teste-v1-ac4c03749fe5021245d97adeb7c4827ee1afde3f/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/services/AtendimentoService.java
+ * Descrição: Modificado 'findByAlunoId' e adicionado 'findById' e 'findByResponsavelId'.
+ */
 package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.AtendimentoDTO;
@@ -29,15 +33,39 @@ public class AtendimentoService {
     private final UsuarioRepository usuarioRepository;
     private final TipoAtendimentoRepository tipoAtendimentoRepository;
 
+    // --- INÍCIO DA MUDANÇA ---
     @Transactional(readOnly = true)
-    public List<AtendimentoDTO> findByAlunoId(Long alunoId) {
+    public AtendimentoDTO findById(Long id) {
+        Atendimento entity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Atendimento não encontrado com ID: " + id));
+        return new AtendimentoDTO(entity);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AtendimentoDTO> findByAlunoId(Long alunoId, String status) {
         if (!alunoRepository.existsById(alunoId)) {
             throw new EntityNotFoundException("Aluno não encontrado com ID: " + alunoId);
         }
         
-        List<Atendimento> list = repository.findByAlunoIdOrderByDataHoraDesc(alunoId);
+        List<Atendimento> list;
+        if (status != null && !status.isBlank()) {
+            list = repository.findByAlunoIdAndStatusOrderByDataHoraDesc(alunoId, status.toUpperCase());
+        } else {
+            list = repository.findByAlunoIdOrderByDataHoraDesc(alunoId);
+        }
+        
         return list.stream().map(AtendimentoDTO::new).collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public List<AtendimentoDTO> findByResponsavelId(Long responsavelId) {
+        if (!usuarioRepository.existsById(responsavelId)) {
+            throw new EntityNotFoundException("Usuário (responsável) não encontrado com ID: " + responsavelId);
+        }
+        List<Atendimento> list = repository.findByResponsavelIdOrderByDataHoraDesc(responsavelId);
+        return list.stream().map(AtendimentoDTO::new).collect(Collectors.toList());
+    }
+    // --- FIM DA MUDANÇA ---
 
     @Transactional
     public AtendimentoDTO insert(AtendimentoInsertDTO dto) {
