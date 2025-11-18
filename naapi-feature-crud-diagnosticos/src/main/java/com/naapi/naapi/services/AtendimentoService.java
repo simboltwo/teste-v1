@@ -1,12 +1,12 @@
 /*
  * Arquivo: simboltwo/teste-v1/teste-v1-ac4c03749fe5021245d97adeb7c4827ee1afde3f/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/services/AtendimentoService.java
- * Descrição: Modificado 'findByAlunoId' e adicionado 'findById' e 'findByResponsavelId'.
+ * Descrição: 'findByResponsavelId' e 'updateStatus' foram atualizados.
  */
 package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.AtendimentoDTO;
+import com.naapi.naapi.dtos.AtendimentoConclusaoDTO; // --- MUDANÇA ---
 import com.naapi.naapi.dtos.AtendimentoInsertDTO;
-import com.naapi.naapi.dtos.AtendimentoStatusUpdateDTO;
 import com.naapi.naapi.entities.Aluno;
 import com.naapi.naapi.entities.Atendimento;
 import com.naapi.naapi.entities.TipoAtendimento;
@@ -15,8 +15,10 @@ import com.naapi.naapi.repositories.AlunoRepository;
 import com.naapi.naapi.repositories.AtendimentoRepository;
 import com.naapi.naapi.repositories.TipoAtendimentoRepository;
 import com.naapi.naapi.repositories.UsuarioRepository;
+import com.naapi.naapi.services.specifications.AtendimentoSpecifications; // --- MUDANÇA ---
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification; // --- MUDANÇA ---
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +35,6 @@ public class AtendimentoService {
     private final UsuarioRepository usuarioRepository;
     private final TipoAtendimentoRepository tipoAtendimentoRepository;
 
-    // --- INÍCIO DA MUDANÇA ---
     @Transactional(readOnly = true)
     public AtendimentoDTO findById(Long id) {
         Atendimento entity = repository.findById(id)
@@ -57,13 +58,27 @@ public class AtendimentoService {
         return list.stream().map(AtendimentoDTO::new).collect(Collectors.toList());
     }
 
+    // --- INÍCIO DA MUDANÇA (Filtro por nome) ---
     @Transactional(readOnly = true)
-    public List<AtendimentoDTO> findByResponsavelId(Long responsavelId) {
+    public List<AtendimentoDTO> findByResponsavelId(Long responsavelId, String alunoNome) {
         if (!usuarioRepository.existsById(responsavelId)) {
             throw new EntityNotFoundException("Usuário (responsável) não encontrado com ID: " + responsavelId);
         }
-        List<Atendimento> list = repository.findByResponsavelIdOrderByDataHoraDesc(responsavelId);
-        return list.stream().map(AtendimentoDTO::new).collect(Collectors.toList());
+
+        // Começa com a specification obrigatória (ID do responsável)
+        Specification<Atendimento> spec = AtendimentoSpecifications.hasResponsavelId(responsavelId);
+
+        // Adiciona o filtro de nome do aluno, se fornecido
+        if (alunoNome != null && !alunoNome.isBlank()) {
+            spec = spec.and(AtendimentoSpecifications.hasAlunoNome(alunoNome));
+        }
+
+        List<Atendimento> list = repository.findAll(spec);
+        // Precisamos ordenar manualmente aqui, pois a specification não ordena por data
+        return list.stream()
+                .map(AtendimentoDTO::new)
+                .sorted((a1, a2) -> a2.getDataHora().compareTo(a1.getDataHora())) // Ordena descendente
+                .collect(Collectors.toList());
     }
     // --- FIM DA MUDANÇA ---
 
@@ -93,18 +108,21 @@ public class AtendimentoService {
         repository.deleteById(id);
     }
     
-
+    // --- INÍCIO DA MUDANÇA (DTO de Conclusão) ---
     @Transactional
-    public AtendimentoDTO updateStatus(Long id, AtendimentoStatusUpdateDTO dto) {
+    public AtendimentoDTO updateStatus(Long id, AtendimentoConclusaoDTO dto) {
         Atendimento entity = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Atendimento não encontrado com ID: " + id));
 
-        // Atualiza apenas o status
+        // Atualiza os campos do DTO
         entity.setStatus(dto.getStatus());
+        entity.setDescricao(dto.getDescricao());
 
         entity = repository.save(entity);
         return new AtendimentoDTO(entity);
     }
+    // --- FIM DA MUDANÇA ---
+
     private void copyDtoToEntity(AtendimentoInsertDTO dto, Atendimento entity) {
         entity.setDataHora(dto.getDataHora());
         entity.setDescricao(dto.getDescricao());

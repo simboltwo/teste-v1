@@ -1,15 +1,15 @@
 /*
  * Arquivo: simboltwo/teste-v1/teste-v1-ac4c03749fe5021245d97adeb7c4827ee1afde3f/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/controllers/AtendimentoController.java
- * Descrição: Modificado GET /aluno/{id}, adicionado GET /me e GET /{id}.
+ * Descrição: Endpoints GET /me e PATCH /{id}/status atualizados.
  */
 package com.naapi.naapi.controllers;
 
 import com.naapi.naapi.dtos.AtendimentoDTO;
+import com.naapi.naapi.dtos.AtendimentoConclusaoDTO; // --- MUDANÇA ---
 import com.naapi.naapi.dtos.AtendimentoInsertDTO;
-import com.naapi.naapi.dtos.AtendimentoStatusUpdateDTO;
-import com.naapi.naapi.entities.Usuario; // Importar
+import com.naapi.naapi.entities.Usuario;
 import com.naapi.naapi.services.AtendimentoService;
-import com.naapi.naapi.services.UsuarioService; // Importar
+import com.naapi.naapi.services.UsuarioService; 
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +27,8 @@ import java.util.List;
 public class AtendimentoController {
 
     private final AtendimentoService service;
-    private final UsuarioService usuarioService; // Injetar UsuarioService
+    private final UsuarioService usuarioService; 
 
-    // --- INÍCIO DA MUDANÇA ---
     @GetMapping("/{id}")
     public ResponseEntity<AtendimentoDTO> findById(@PathVariable Long id) {
         AtendimentoDTO dto = service.findById(id);
@@ -44,11 +43,13 @@ public class AtendimentoController {
         return ResponseEntity.ok(list);
     }
 
+    // --- INÍCIO DA MUDANÇA (Filtro) ---
     @GetMapping("/me")
-    public ResponseEntity<List<AtendimentoDTO>> findByResponsavel() {
-        // Pega o usuário logado
+    public ResponseEntity<List<AtendimentoDTO>> findByResponsavel(
+            @RequestParam(value = "alunoNome", required = false) String alunoNome) {
+        
         Usuario usuarioLogado = usuarioService.getAuthenticatedUser();
-        List<AtendimentoDTO> list = service.findByResponsavelId(usuarioLogado.getId());
+        List<AtendimentoDTO> list = service.findByResponsavelId(usuarioLogado.getId(), alunoNome);
         return ResponseEntity.ok(list);
     }
     // --- FIM DA MUDANÇA ---
@@ -73,12 +74,14 @@ public class AtendimentoController {
         return ResponseEntity.noContent().build();
     }
 
+    // --- INÍCIO DA MUDANÇA (DTO de Conclusão) ---
     @PatchMapping("/{id}/status")
     public ResponseEntity<AtendimentoDTO> updateStatus(
             @PathVariable Long id,
-            @Valid @RequestBody AtendimentoStatusUpdateDTO dto) {
+            @Valid @RequestBody AtendimentoConclusaoDTO dto) { // Usa o novo DTO
         
-        AtendimentoDTO updatedDto = service.updateStatus(id, dto);
+        AtendimentoDTO updatedDto = service.updateStatus(id, dto); // O serviço já foi atualizado
         return ResponseEntity.ok(updatedDto);
     }
+    // --- FIM DA MUDANÇA ---
 }

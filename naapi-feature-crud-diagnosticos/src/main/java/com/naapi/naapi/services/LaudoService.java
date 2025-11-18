@@ -1,3 +1,7 @@
+/*
+ * Arquivo: simboltwo/teste-v1/teste-v1-ac4c03749fe5021245d97adeb7c4827ee1afde3f/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/services/LaudoService.java
+ * Descrição: Adicionado "flags", "inline" nas opções de upload do Cloudinary.
+ */
 package com.naapi.naapi.services;
 
 import com.cloudinary.Cloudinary;
@@ -45,11 +49,14 @@ public class LaudoService {
             throw new IllegalArgumentException("O arquivo do laudo (PDF) é obrigatório.");
         }
 
+        // --- INÍCIO DA MUDANÇA ---
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), 
             ObjectUtils.asMap(
                 "folder", "naapi_laudos",
-                "resource_type", "auto" 
+                "resource_type", "auto",
+                "flags", "inline" // Força o Content-Disposition: inline
             ));
+        // --- FIM DA MUDANÇA ---
         
         String fileUrl = (String) uploadResult.get("secure_url");
         entity.setUrlArquivo(fileUrl); 
@@ -68,11 +75,14 @@ public class LaudoService {
         String oldFileUrl = entity.getUrlArquivo(); 
 
         if (file != null && !file.isEmpty()) {
+            // --- INÍCIO DA MUDANÇA ---
             Map uploadResult = cloudinary.uploader().upload(file.getBytes(), 
                 ObjectUtils.asMap(
                     "folder", "naapi_laudos",
-                    "resource_type", "auto"
+                    "resource_type", "auto",
+                    "flags", "inline" // Força o Content-Disposition: inline
                 ));
+            // --- FIM DA MUDANÇA ---
             
             String newFileUrl = (String) uploadResult.get("secure_url");
             entity.setUrlArquivo(newFileUrl); 
@@ -124,7 +134,6 @@ public class LaudoService {
         entity.setAluno(aluno);
     }
     
-    // Helper levemente modificado para lidar com resource_type
     private String extractPublicIdFromUrl(String url, boolean isRaw) {
         try {
             if (url == null || !url.contains("res.cloudinary.com")) {
@@ -135,12 +144,9 @@ public class LaudoService {
             relevantPart = relevantPart.replaceAll("v\\d+/", "");
             
             if(isRaw) {
-                // Para "raw" (pdfs, etc), o public_id inclui a pasta
-                // ex: "naapi_laudos/arquivo.pdf"
                 return relevantPart; 
             }
             
-            // Para imagens, remove a extensão
             return relevantPart.substring(0, relevantPart.lastIndexOf('.'));
 
         } catch (Exception e) {
