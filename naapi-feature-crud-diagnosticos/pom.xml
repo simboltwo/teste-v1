@@ -6,8 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.5.6</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
+		<relativePath/> </parent>
 	<groupId>com.naapi</groupId>
 	<artifactId>naapi</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -118,7 +117,13 @@
 			<version>0.12.6</version>
 			<scope>runtime</scope>
 		</dependency>
-	</dependencies>
+
+		<dependency>
+			<groupId>com.github.librepdf</groupId>
+			<artifactId>openpdf</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+		</dependencies>
 
 	<build>
 		<plugins>

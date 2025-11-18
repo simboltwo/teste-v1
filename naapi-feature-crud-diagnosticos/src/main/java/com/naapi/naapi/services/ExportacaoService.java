@@ -1,3 +1,7 @@
+/*
+ * Arquivo: simboltwo/teste-v1/teste-v1-ac4c03749fe5021245d97adeb7c4827ee1afde3f/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/services/ExportacaoService.java
+ * Descrição: Corrigidas as chamadas de método para 'getRelatorioAlunosPorCurso' e 'getRelatorioAlunosPorDiagnostico'.
+ */
 package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.RelatorioAlunosPorCursoDTO;
@@ -18,7 +22,9 @@ public class ExportacaoService {
     private final RelatorioService relatorioService;
 
     public String exportarAlunosPorCursoCSV() {
+        // --- INÍCIO DA CORREÇÃO ---
         List<RelatorioAlunosPorCursoDTO> dados = relatorioService.getRelatorioAlunosPorCurso();
+        // --- FIM DA CORREÇÃO ---
         
         StringWriter stringWriter = new StringWriter();
         
@@ -36,7 +42,9 @@ public class ExportacaoService {
     }
 
     public String exportarAlunosPorDiagnosticoCSV() {
+        // --- INÍCIO DA CORREÇÃO ---
         List<RelatorioAlunosPorDiagnosticoDTO> dados = relatorioService.getRelatorioAlunosPorDiagnostico();
+        // --- FIM DA CORREÇÃO ---
         StringWriter stringWriter = new StringWriter();
         String[] cabecalhos = {"Diagnostico", "Total de Alunos"};
 
