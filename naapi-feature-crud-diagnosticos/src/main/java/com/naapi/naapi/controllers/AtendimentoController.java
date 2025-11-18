@@ -2,6 +2,7 @@ package com.naapi.naapi.controllers;
 
 import com.naapi.naapi.dtos.AtendimentoDTO;
 import com.naapi.naapi.dtos.AtendimentoInsertDTO;
+import com.naapi.naapi.dtos.AtendimentoStatusUpdateDTO;
 import com.naapi.naapi.services.AtendimentoService;
 
 import jakarta.validation.Valid;
@@ -45,5 +46,14 @@ public class AtendimentoController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<AtendimentoDTO> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody AtendimentoStatusUpdateDTO dto) {
+        
+        AtendimentoDTO updatedDto = service.updateStatus(id, dto);
+        return ResponseEntity.ok(updatedDto);
     }
 }

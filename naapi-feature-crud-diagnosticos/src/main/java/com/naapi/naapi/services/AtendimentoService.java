@@ -2,6 +2,7 @@ package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.AtendimentoDTO;
 import com.naapi.naapi.dtos.AtendimentoInsertDTO;
+import com.naapi.naapi.dtos.AtendimentoStatusUpdateDTO;
 import com.naapi.naapi.entities.Aluno;
 import com.naapi.naapi.entities.Atendimento;
 import com.naapi.naapi.entities.TipoAtendimento;
@@ -64,6 +65,18 @@ public class AtendimentoService {
         repository.deleteById(id);
     }
     
+
+    @Transactional
+    public AtendimentoDTO updateStatus(Long id, AtendimentoStatusUpdateDTO dto) {
+        Atendimento entity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Atendimento não encontrado com ID: " + id));
+
+        // Atualiza apenas o status
+        entity.setStatus(dto.getStatus());
+
+        entity = repository.save(entity);
+        return new AtendimentoDTO(entity);
+    }
     private void copyDtoToEntity(AtendimentoInsertDTO dto, Atendimento entity) {
         entity.setDataHora(dto.getDataHora());
         entity.setDescricao(dto.getDescricao());
