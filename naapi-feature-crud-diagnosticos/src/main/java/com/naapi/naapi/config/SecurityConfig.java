@@ -1,5 +1,3 @@
-// simboltwo/teste-v1/teste-v1-60a965f68afab6e5940ba599fb03c96b4df194e0/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/config/SecurityConfig.java
-
 package com.naapi.naapi.config;
 
 import java.util.Arrays;
@@ -19,14 +17,12 @@ import org.springframework.security.config.Customizer;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-// Imports para o JWT e AuthenticationManager
 import com.naapi.naapi.config.security.JwtAuthFilter; 
 import lombok.RequiredArgsConstructor; 
 import org.springframework.security.authentication.AuthenticationManager; 
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration; 
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; 
 
-// Imports para o EntryPoint (Tratamento de 401)
 import org.springframework.security.web.AuthenticationEntryPoint;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +30,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor // Injeta o JwtAuthFilter
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -60,12 +56,10 @@ public class SecurityConfig {
                 .requestMatchers("/setup/**").permitAll()
                 .requestMatchers("/health").permitAll()
                 
-                // --- MUDANÇA AQUI ---
                 .requestMatchers("/auth/login").permitAll() // Permitir login (removido /api)
                 .requestMatchers(HttpMethod.GET, "/usuarios/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/usuarios/me/detalhes").authenticated() 
                 .requestMatchers(HttpMethod.PUT, "/usuarios/me/senha").authenticated() 
-                // --- FIM DA MUDANÇA ---
 
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("COORDENADOR_NAAPI")
                 .requestMatchers(HttpMethod.GET, "/usuarios/**").hasRole("COORDENADOR_NAAPI")
@@ -85,7 +79,6 @@ public class SecurityConfig {
                 )
                 .requestMatchers(HttpMethod.POST, "/alunos").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
                 .requestMatchers(HttpMethod.PUT, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
-                // --- NOVA REGRA PATCH ---
                 .requestMatchers(HttpMethod.PATCH, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
                 .requestMatchers(HttpMethod.DELETE, "/alunos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
 
@@ -121,14 +114,20 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/atendimentos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
                 .requestMatchers(HttpMethod.DELETE, "/atendimentos/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
 
+
+                .requestMatchers(HttpMethod.GET, "/historico-academico/**").hasAnyRole(
+                    "COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI",
+                    "COORDENADOR_CURSO", "PROFESSOR"
+                )
+                .requestMatchers(HttpMethod.POST, "/historico-academico").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
+                .requestMatchers(HttpMethod.PUT, "/historico-academico/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
+                .requestMatchers(HttpMethod.DELETE, "/historico-academico/**").hasAnyRole("COORDENADOR_NAAPI", "MEMBRO_TECNICO", "ESTAGIARIO_NAAPI")
+
                 .anyRequest().authenticated()
             )
-            // REMOVEMOS O .httpBasic() 
             
-            // ADICIONAMOS O FILTRO JWT
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             
-            // MANTEMOS O ENTRYPOINT (para customizar o erro 401)
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(new AuthenticationEntryPoint() {
                     @Override
@@ -147,7 +146,7 @@ public class SecurityConfig {
                 })
             );
 
-        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // Para H2 console
+        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();
     }
@@ -159,7 +158,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:4200", 
             "https://naapi.netlify.app",
-            "https://naapi-front-v2.netlify.app" // <-- ADICIONE ESTA LINHA
+            "https://naapi-front-v2.netlify.app"
         ));
         
         configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "PATCH", "DELETE", "OPTIONS")); // Adicionei PATCH
