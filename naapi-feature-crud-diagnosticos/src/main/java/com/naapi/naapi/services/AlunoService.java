@@ -52,7 +52,8 @@ public class AlunoService {
             Long turmaId, 
             List<Long> diagnosticoIds,
             LocalDate atendimentoData, 
-            String atendimentoStatus
+            String atendimentoStatus,
+            List<Long> turmasLecionadasIds
     ) {
         Specification<Aluno> spec = Specification.where(null);
 
@@ -73,6 +74,9 @@ public class AlunoService {
         }
         if (atendimentoData != null && atendimentoStatus != null && !atendimentoStatus.isBlank()) {
             spec = spec.and(AlunoSpecifications.hasAtendimentoAgendadoParaData(atendimentoData, atendimentoStatus));
+        }
+        if (turmasLecionadasIds != null && !turmasLecionadasIds.isEmpty()) {
+            spec = spec.and(AlunoSpecifications.hasTurmaIds(turmasLecionadasIds));
         }
         List<Aluno> list = repository.findAll(spec);
         return list.stream().map(AlunoDTO::new).collect(Collectors.toList());

@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -32,11 +33,17 @@ public class UsuarioDTO {
     @Builder.Default
     private Set<PapelDTO> papeis = new HashSet<>();
 
+    @Builder.Default
+    private Set<TurmaDTO> turmasLecionadas = new HashSet<>();
+
     public UsuarioDTO(Usuario entity) {
         this.id = entity.getId();
         this.nome = entity.getNome();
         this.email = entity.getEmail();
-        this.papeis = new HashSet<>();
-        entity.getPapeis().forEach(papel -> this.papeis.add(new PapelDTO(papel)));
+        this.papeis = entity.getPapeis().stream().map(PapelDTO::new).collect(Collectors.toSet());
+
+        if (entity.getTurmasLecionadas() != null) {
+            this.turmasLecionadas = entity.getTurmasLecionadas().stream().map(TurmaDTO::new).collect(Collectors.toSet());
+        }
     }
 }

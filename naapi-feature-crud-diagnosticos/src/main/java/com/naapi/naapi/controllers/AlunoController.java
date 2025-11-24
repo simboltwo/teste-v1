@@ -37,9 +37,10 @@ public class AlunoController {
             @RequestParam(value = "turmaId", required = false) Long turmaId,
             @RequestParam(value = "diagnosticoId", required = false) List<Long> diagnosticoIds ,
             @RequestParam(value = "atendimentoData", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate atendimentoData,
-            @RequestParam(value = "atendimentoStatus", required = false) String atendimentoStatus
+            @RequestParam(value = "atendimentoStatus", required = false) String atendimentoStatus,
+            @RequestParam(value = "turmasLecionadasId", required = false) List<Long> turmasLecionadasIds
     ) {
-        List<AlunoDTO> list = service.findAll(nome, matricula, cursoIds, turmaId, diagnosticoIds, atendimentoData, atendimentoStatus);
+        List<AlunoDTO> list = service.findAll(nome, matricula, cursoIds, turmaId, diagnosticoIds, atendimentoData, atendimentoStatus, turmasLecionadasIds);
         return ResponseEntity.ok(list);
     }
 

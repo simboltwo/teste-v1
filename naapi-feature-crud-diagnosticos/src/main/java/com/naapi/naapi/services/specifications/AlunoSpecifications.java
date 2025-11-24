@@ -79,4 +79,11 @@ public class AlunoSpecifications {
             );
         };
     }
+
+    public static Specification<Aluno> hasTurmaIds(List<Long> turmaIds) {
+        return (root, query, criteriaBuilder) -> {
+            Join<Aluno, Turma> turmaJoin = root.join("turma");
+            return turmaJoin.get("id").in(turmaIds); 
+        };
+    }
 }

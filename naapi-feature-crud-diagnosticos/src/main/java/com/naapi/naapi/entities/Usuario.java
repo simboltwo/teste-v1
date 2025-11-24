@@ -81,4 +81,11 @@ public class Usuario implements UserDetails {
     @OneToMany(mappedBy = "responsavel")
     @Builder.Default
     private Set<Atendimento> atendimentosRealizados = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "TbProfessorTurma",
+            joinColumns = @JoinColumn(name = "CdUsuario"),
+            inverseJoinColumns = @JoinColumn(name = "CdTurma"))
+    @Builder.Default
+    private Set<Turma> turmasLecionadas = new HashSet<>();
 }
