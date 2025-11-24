@@ -8,6 +8,8 @@ import com.naapi.naapi.dtos.AlunoStatusUpdateDTO; // NOVO
 import com.naapi.naapi.services.AlunoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType; 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException; 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -32,9 +35,11 @@ public class AlunoController {
             @RequestParam(value = "matricula", required = false) String matricula,
             @RequestParam(value = "cursoId", required = false) List<Long> cursoIds, 
             @RequestParam(value = "turmaId", required = false) Long turmaId,
-            @RequestParam(value = "diagnosticoId", required = false) List<Long> diagnosticoIds 
+            @RequestParam(value = "diagnosticoId", required = false) List<Long> diagnosticoIds ,
+            @RequestParam(value = "atendimentoData", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate atendimentoData,
+            @RequestParam(value = "atendimentoStatus", required = false) String atendimentoStatus
     ) {
-        List<AlunoDTO> list = service.findAll(nome, matricula, cursoIds, turmaId, diagnosticoIds);
+        List<AlunoDTO> list = service.findAll(nome, matricula, cursoIds, turmaId, diagnosticoIds, atendimentoData, atendimentoStatus);
         return ResponseEntity.ok(list);
     }
 

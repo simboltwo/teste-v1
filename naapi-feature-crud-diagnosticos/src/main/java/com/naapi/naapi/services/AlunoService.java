@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import com.naapi.naapi.dtos.AlunoDTO;
 import com.naapi.naapi.dtos.AlunoInsertDTO;
-import com.naapi.naapi.dtos.AlunoStatusUpdateDTO; // NOVO
+import com.naapi.naapi.dtos.AlunoStatusUpdateDTO;
 import com.naapi.naapi.entities.Aluno;
 import com.naapi.naapi.entities.Curso;
 import com.naapi.naapi.entities.Diagnostico;
@@ -28,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 
 
 @Service
@@ -48,7 +50,9 @@ public class AlunoService {
             String matricula, 
             List<Long> cursoIds, 
             Long turmaId, 
-            List<Long> diagnosticoIds
+            List<Long> diagnosticoIds,
+            LocalDate atendimentoData, 
+            String atendimentoStatus
     ) {
         Specification<Aluno> spec = Specification.where(null);
 
@@ -67,7 +71,9 @@ public class AlunoService {
         if (diagnosticoIds != null && !diagnosticoIds.isEmpty()) { 
             spec = spec.and(AlunoSpecifications.hasDiagnosticoIds(diagnosticoIds));
         }
-
+        if (atendimentoData != null && atendimentoStatus != null && !atendimentoStatus.isBlank()) {
+            spec = spec.and(AlunoSpecifications.hasAtendimentoAgendadoParaData(atendimentoData, atendimentoStatus));
+        }
         List<Aluno> list = repository.findAll(spec);
         return list.stream().map(AlunoDTO::new).collect(Collectors.toList());
     }
