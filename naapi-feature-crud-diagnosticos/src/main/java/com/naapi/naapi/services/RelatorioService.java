@@ -18,11 +18,13 @@ import java.util.List;
 public class RelatorioService {
 
     private final AlunoRepository alunoRepository;
-    private final AtendimentoRepository atendimentoRepository; // <-- 2. INJETAR
+    private final AtendimentoRepository atendimentoRepository;
 
     private final AlunoService alunoService;
     private final LaudoService laudoService;
     private final PeiService peiService;
+
+    private final HistoricoAcademicoService historicoAcademicoService;
 
     @Transactional(readOnly = true)
     public RelatorioKpiDTO getTotalAlunosAtivos() {
@@ -30,7 +32,6 @@ public class RelatorioService {
         return new RelatorioKpiDTO(total);
     }
 
-    // --- 3. ADICIONAR NOVO MÉTODO ---
     @Transactional(readOnly = true)
     public RelatorioKpiDTO getTotalAtendimentosPorStatus(String status) {
         // O frontend envia 'REALIZADO' ou 'AGENDADO'
@@ -55,11 +56,13 @@ public class RelatorioService {
         AlunoDTO aluno = alunoService.findById(alunoId);
         List<LaudoDTO> laudos = laudoService.findByAlunoId(alunoId);
         List<PeiDTO> peis = peiService.findByAlunoId(alunoId);
+        List<HistoricoAcademicoDTO> historico = historicoAcademicoService.findByAlunoId(alunoId);
 
         return RelatorioHistoricoAlunoDTO.builder()
                 .aluno(aluno)
                 .laudos(laudos)
                 .peis(peis)
+                .historicoAcademico(historico)
                 .build();
     }
 

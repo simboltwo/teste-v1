@@ -1,18 +1,10 @@
-/*
- * Arquivo NOVO: simboltwo/teste-v1/teste-v1-ac4c03749fe5021245d97adeb7c4827ee1afde3f/naapi-feature-crud-diagnosticos/src/main/java/com/naapi/naapi/services/PdfService.java
- * Descrição: Serviço para gerar PDF a partir do RelatorioHistoricoAlunoDTO.
- */
 package com.naapi.naapi.services;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import com.naapi.naapi.dtos.AlunoDTO;
-import com.naapi.naapi.dtos.DiagnosticoDTO;
-import com.naapi.naapi.dtos.LaudoDTO;
-import com.naapi.naapi.dtos.PeiDTO;
-import com.naapi.naapi.dtos.RelatorioHistoricoAlunoDTO;
+import com.naapi.naapi.dtos.*;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -32,28 +24,24 @@ public class PdfService {
             PdfWriter.getInstance(document, baos);
             document.open();
 
-            // 1. Título
             Paragraph titulo = new Paragraph("Relatório Histórico do Aluno", FONT_TITULO);
             titulo.setAlignment(Element.ALIGN_CENTER);
             titulo.setSpacingAfter(20f);
             document.add(titulo);
 
-            // 2. Dados do Aluno
             addDadosAluno(document, dto.getAluno());
+            
+            addHistoricoAcademico(document, dto);
 
-            // 3. Diagnósticos
             addDiagnosticos(document, dto.getAluno());
 
-            // 4. Laudos
             addLaudos(document, dto);
 
-            // 5. PEIs
             addPeis(document, dto);
 
             document.close();
             return baos.toByteArray();
         } catch (Exception e) {
-            // Em um app real, teríamos um tratamento de exceção mais robusto
             throw new RuntimeException("Erro ao gerar PDF", e);
         }
     }
@@ -75,13 +63,44 @@ public class PdfService {
 
         table.addCell(createLabelCell("Matrícula:"));
         table.addCell(createValueCell(aluno.getMatricula()));
-
-        table.addCell(createLabelCell("Curso:"));
+                
+        table.addCell(createLabelCell("Curso (Atual):"));
         table.addCell(createValueCell(aluno.getCurso().getNome()));
         
-        table.addCell(createLabelCell("Turma:"));
+        table.addCell(createLabelCell("Turma (Atual):"));
         table.addCell(createValueCell(aluno.getTurma().getNome()));
 
+        document.add(table);
+    }
+    
+    private void addHistoricoAcademico(Document document, RelatorioHistoricoAlunoDTO dto) throws DocumentException {
+        document.add(Chunk.NEWLINE);
+        Paragraph subtitulo = new Paragraph("Histórico Acadêmico (Trajetória)", FONT_SUBTITULO);
+        subtitulo.setSpacingBefore(10f);
+        document.add(subtitulo);
+        document.add(Chunk.NEWLINE);
+
+        if (dto.getHistoricoAcademico() == null || dto.getHistoricoAcademico().isEmpty()) {
+            document.add(new Paragraph("Nenhum registro de histórico acadêmico.", FONT_NORMAL));
+            return;
+        }
+
+        PdfPTable table = new PdfPTable(3);
+        table.setWidthPercentage(100);
+        table.addCell(createHeaderCell("Curso"));
+        table.addCell(createHeaderCell("Turma/Período"));
+        table.addCell(createHeaderCell("Período"));
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        for (HistoricoAcademicoDTO hist : dto.getHistoricoAcademico()) {
+            String dataFimStr = hist.getDataFim() != null ? hist.getDataFim().format(dtf) : "Atual";
+            String periodo = hist.getDataInicio().format(dtf) + " - " + dataFimStr;
+            
+            table.addCell(createValueCell(hist.getCurso().getNome()));
+            table.addCell(createValueCell(hist.getTurma() != null ? hist.getTurma().getNome() : "N/D"));
+            table.addCell(createValueCell(periodo));
+        }
         document.add(table);
     }
 
@@ -132,7 +151,6 @@ public class PdfService {
             String desc = laudo.getDescricao() != null ? laudo.getDescricao() : "Sem descrição";
 
             table.addCell(createLabelCell("Descrição: " + desc + " (Data: " + data + ")"));
-            // Não colocamos a URL por ser um PDF, apenas listamos.
             
             document.add(table);
         }
@@ -174,8 +192,7 @@ public class PdfService {
             document.add(table);
         }
     }
-
-    // --- Helpers de Célula ---
+    
     private PdfPCell createLabelCell(String text) {
         PdfPCell cell = new PdfPCell(new Paragraph(text, FONT_LABEL));
         cell.setBorder(PdfPCell.NO_BORDER);

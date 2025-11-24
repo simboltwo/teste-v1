@@ -19,5 +19,6 @@ public class RelatorioHistoricoAlunoDTO {
     private List<LaudoDTO> laudos;
 
     private List<PeiDTO> peis;
-
+    
+    private List<HistoricoAcademicoDTO> historicoAcademico;
 }
