@@ -2,11 +2,14 @@ package com.naapi.naapi.services;
 
 import com.naapi.naapi.dtos.*;
 import com.naapi.naapi.repositories.AlunoRepository;
-import com.naapi.naapi.repositories.AtendimentoRepository; // <-- 1. IMPORTAR
+import com.naapi.naapi.repositories.AtendimentoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 import java.util.List;
 
@@ -58,5 +61,14 @@ public class RelatorioService {
                 .laudos(laudos)
                 .peis(peis)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public RelatorioKpiDTO getTotalAtendimentosPorData(LocalDate data, String status) {
+        LocalDateTime inicioDoDia = data.atStartOfDay();
+        LocalDateTime fimDoDia = data.atTime(LocalTime.MAX);
+        
+        long total = atendimentoRepository.countByDataHoraBetweenAndStatus(inicioDoDia, fimDoDia, status.toUpperCase());
+        return new RelatorioKpiDTO(total);
     }
 }

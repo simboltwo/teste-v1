@@ -6,9 +6,10 @@ package com.naapi.naapi.repositories;
 
 import com.naapi.naapi.entities.Atendimento;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor; // --- MUDANÇA ---
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -21,4 +22,6 @@ public interface AtendimentoRepository extends JpaRepository<Atendimento, Long>,
     List<Atendimento> findByResponsavelIdOrderByDataHoraDesc(Long responsavelId);
 
     long countByStatus(String status);
+
+    long countByDataHoraBetweenAndStatus(LocalDateTime start, LocalDateTime end, String status);
 }

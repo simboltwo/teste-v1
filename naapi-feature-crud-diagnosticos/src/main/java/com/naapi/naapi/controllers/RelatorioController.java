@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -98,5 +99,14 @@ public class RelatorioController {
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE + "; charset=utf-8");
         return ResponseEntity.ok().headers(headers).body(csvData);
+    }
+
+    @GetMapping("/total-atendimentos-por-data")
+    public ResponseEntity<RelatorioKpiDTO> getTotalAtendimentosPorData(
+        @RequestParam(value = "data") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+        @RequestParam(value = "status") String status) {
+
+        RelatorioKpiDTO dto = relatorioService.getTotalAtendimentosPorData(data, status);
+        return ResponseEntity.ok(dto);
     }
 }
