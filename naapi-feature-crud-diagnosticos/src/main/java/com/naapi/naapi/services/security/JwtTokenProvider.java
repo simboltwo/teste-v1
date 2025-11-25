@@ -23,7 +23,7 @@ public class JwtTokenProvider {
     private long jwtExpirationInMs;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes = jwtSecret.trim().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -33,9 +33,6 @@ public class JwtTokenProvider {
         
         String email = userDetails.getUsername();
         
-        // Adiciona claims personalizadas (ex: roles) se desejar
-        // Claims claims = Jwts.claims().subject(email).build();
-        // claims.put("roles", userDetails.getAuthorities());
 
         return Jwts.builder()
                 .subject(email)
