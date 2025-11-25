@@ -52,7 +52,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (Exception ex) {
-                 System.err.println("Não foi possível setar a autenticação do usuário: " + ex.getMessage());
+                // ISSO É O QUE VAI TE SALVAR:
+                System.err.println("### ERRO JWT ###: " + ex.getMessage());
+                ex.printStackTrace(); // Vai aparecer no log do Render
             }
         }
 
